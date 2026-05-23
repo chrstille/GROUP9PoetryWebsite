@@ -1,0 +1,36 @@
+@model Poem
+
+<h2>Upload Poetry</h2>
+
+<form asp-action="Create">
+
+    <label>Title</label>
+
+    <input asp-for="Title"
+           class="form-control"/>
+
+    <br>
+
+    <label>Author</label>
+
+    <input asp-for="Author"
+           class="form-control"/>
+
+    <br>
+
+    <label>Poem</label>
+
+    <textarea asp-for="Text"
+              rows="8"
+              class="form-control">
+    </textarea>
+
+    <br>
+
+    <button class="btn btn-success">
+
+        Publish
+
+    </button>
+
+</form>

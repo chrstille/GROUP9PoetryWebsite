@@ -1,0 +1,43 @@
+@model GROUP9PoetryWebsite.Models.Login
+@{
+    Layout = null;
+    ViewData["Title"] = "Welcome Back";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="~/css/acc.css" asp-append-version="true" />
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+        <h2>Welcome Back</h2>
+        <p class="subtitle">Open the bottle to release your thoughts</p>
+
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty] != null)
+            {
+                <div asp-validation-summary="ModelOnly" class="summary-validation"></div>
+            }
+
+            <div class="form-group">
+                <label asp-for="Username"></label>
+                <input asp-for="Username" autocomplete="off" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn-submit">Log In</button>
+        </form>
+
+        <p class="switch-prompt">
+            New to Verse in a Bottle? <a href="/Account/Register">Create Account</a>
+        </p>
+    </div>
+</div>

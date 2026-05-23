@@ -1,0 +1,112 @@
+<style>
+/* Custom variables matching your Parchment/Gold palette */
+:root {
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Jost', sans-serif;
+    --color-bg-opaque: #fdf6ee; /* Parchment background */
+    --color-text-main: #3a2e26; /* Deep Ink */
+    --color-text-muted: #7a6a5a; /* Faded Ink */
+    --color-accent: #c8965a;    /* Gold */
+    --color-border: rgba(180, 145, 100, 0.18);
+}
+
+.poetry-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: var(--color-bg-opaque);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.75rem 2rem;
+    transition: all 0.3s ease;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-logo {
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: var(--color-text-main);
+    text-decoration: none;
+}
+
+.nav-logo .logo-dot { color: var(--color-accent); }
+
+.nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* Button Classes with curves */
+.nav-btn-outline, .nav-btn-solid {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px; /* Curved sides */
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.nav-btn-outline {
+    color: var(--color-text-main);
+    border: 1px solid var(--color-accent);
+}
+
+.nav-btn-outline:hover {
+    background-color: var(--color-accent);
+    color: #fff;
+}
+
+.nav-btn-solid {
+    background-color: var(--color-accent);
+    color: #fff;
+    border: 1px solid var(--color-accent);
+}
+
+.nav-btn-solid:hover {
+    background-color: #a87a4a;
+}
+
+.nav-logout-btn {
+    background: none; border: none;
+    font-family: var(--font-sans);
+    font-size: 0.85rem; color: #e05e5e; cursor: pointer;
+}
+
+body { padding-top: 4rem; }
+</style>
+
+<nav class="poetry-navbar">
+    <div class="nav-container">
+        <a class="nav-logo" href="/">
+            VerseInABottle<span class="logo-dot">.</span>
+        </a>
+        
+        <div class="nav-auth">
+            @if (User?.Identity?.IsAuthenticated == true)
+            {
+                <form asp-controller="Account" asp-action="Logout" method="post" class="logout-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="nav-logout-btn">Log Out</button>
+                </form>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="nav-btn-outline">Log In</a>
+                <a asp-controller="Account" asp-action="Register" class="nav-btn-solid">Sign Up</a>
+            }
+        </div>
+    </div>
+</nav>

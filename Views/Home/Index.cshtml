@@ -1,0 +1,174 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<partial name="~/Views/Shared/_Navbar.cshtml" />
+
+<div id="emojis"></div>
+<div class="halo"></div>
+
+<div class="stage">
+    <header>
+        <span class="eyebrow">Quote of the Day</span>
+        <h1>Bubbles of <em>Thoughts</em></h1>
+        <p class="subtitle">a whisper of thought, just for you</p>
+    </header>
+
+    <div class="bottle-wrap" id="bottleWrap" role="button" aria-label="Click to reveal today's poem" tabindex="0">
+        <img
+            id="bottleImg"
+            class="bottle-img"
+            src="~/images/bottle.png"
+            alt="Glass bottle containing a poem"
+            onerror="this.onerror=null; this.style.display='none'; document.getElementById('svgBottle').style.display='block';"
+        />
+        
+        <svg id="svgBottle" style="display:none; width:100%; height:100%;" viewBox="0 0 160 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="bG" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stop-color="#d4a96a" stop-opacity="0.18"/>
+                    <stop offset="28%"  stop-color="#fff8ee" stop-opacity="0.62"/>
+                    <stop offset="55%"  stop-color="#e8c98a" stop-opacity="0.28"/>
+                    <stop offset="80%"  stop-color="#fff8ee" stop-opacity="0.45"/>
+                    <stop offset="100%" stop-color="#c8965a" stop-opacity="0.2"/>
+                </linearGradient>
+                <linearGradient id="neckG" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"  stop-color="#fff8ee" stop-opacity="0.5"/>
+                    <stop offset="50%" stop-color="#e8c98a" stop-opacity="0.2"/>
+                    <stop offset="100%" stop-color="#fff8ee" stop-opacity="0.4"/>
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="b"/>
+                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+            </defs>
+            <rect x="62" y="18" width="36" height="22" rx="5" fill="#c8965a" opacity="0.85"/>
+            <rect x="65" y="20" width="8" height="18" rx="2" fill="rgba(255,240,210,0.45)"/>
+            <path d="M62 40 Q60 58 52 72 L52 95 L108 95 L108 72 Q100 58 98 40 Z" fill="url(#neckG)" stroke="rgba(200,155,90,0.4)" stroke-width="1.2"/>
+            <path d="M65 44 Q64 58 58 70" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M52 95 Q38 112 36 145 Q34 185 36 220 Q38 255 50 270 Q65 282 80 283 Q95 282 110 270 Q122 255 124 220 Q126 185 124 145 Q122 112 108 95 Z" fill="url(#bG)" stroke="rgba(200,155,90,0.35)" stroke-width="1.4" filter="url(#glow)"/>
+            <path d="M55 108 Q48 140 48 180 Q48 218 52 248" stroke="rgba(255,255,255,0.55)" stroke-width="3" stroke-linecap="round"/>
+            <path d="M70 100 Q66 130 65 170" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+            <ellipse cx="80" cy="190" rx="26" ry="38" fill="rgba(255,240,200,0.18)"/>
+            <line x1="66" y1="170" x2="94" y2="170" stroke="rgba(180,140,80,0.35)" stroke-width="1"/>
+            <line x1="63" y1="180" x2="97" y2="180" stroke="rgba(180,140,80,0.35)" stroke-width="1"/>
+            <line x1="64" y1="190" x2="96" y2="190" stroke="rgba(180,140,80,0.35)" stroke-width="1"/>
+            <line x1="66" y1="200" x2="94" y2="200" stroke="rgba(180,140,80,0.35)" stroke-width="1"/>
+            <line x1="68" y1="210" x2="92" y2="210" stroke="rgba(180,140,80,0.3)"  stroke-width="1"/>
+            <ellipse cx="80" cy="272" rx="24" ry="6" fill="rgba(255,255,255,0.22)"/>
+        </svg>
+    </div>
+
+    <p class="hint" id="hint">tap the jar to release the silenced whisper.</p>
+
+    <div class="poem-card" id="poemCard" aria-live="polite">
+        <p class="poem-label">Today's Quote</p>
+        <blockquote id="poemText"></blockquote>
+        <p class="author" id="poemAuthor"></p>
+        <span class="ornament">· · ·</span>
+        <button class="another-btn" id="anotherBtn" aria-label="Reveal another quote">Another Quote</button>
+    </div>
+</div>
+
+<footer>&copy; 2026 &nbsp;·&nbsp; Verse in a Bottle &nbsp;·&nbsp; Group 9</footer>
+
+@section Scripts {
+    <script>
+        // Ambient background emoji instantiator
+        const EMOJI_LIST = ['🌿','✨','🕊️','📜','🌸','🍂','🌙','⭐','🌊','🦋','🌺','☁️','🪶','🌻','💫'];
+        const container  = document.getElementById('emojis');
+
+        EMOJI_LIST.forEach((em, i) => {
+            const el = document.createElement('span');
+            el.className = 'emoji';
+            el.textContent = em;
+            const left = 4 + (i / EMOJI_LIST.length) * 92;
+            const dur  = 12 + Math.random() * 9;
+            const del  = Math.random() * 14;
+            const spin = (Math.random() - 0.5) * 60;
+            el.style.cssText = `left: ${left}%; --dur: ${dur}s; --delay: ${del}s; --spin: ${spin}deg;`;
+            container.appendChild(el);
+        });
+
+        // Interactive controller bindings
+        const bottleWrap = document.getElementById('bottleWrap');
+        const bottleImg  = document.getElementById('bottleImg');
+        const svgBottle  = document.getElementById('svgBottle');
+        const hint       = document.getElementById('hint');
+        const poemCard   = document.getElementById('poemCard');
+        const poemText   = document.getElementById('poemText');
+        const poemAuthor = document.getElementById('poemAuthor');
+        const anotherBtn = document.getElementById('anotherBtn');
+
+        let isShaking = false;
+
+        function getActiveBottle() {
+            if (bottleImg.style.display === 'none' || bottleImg.hidden) {
+                return svgBottle;
+            }
+            return bottleImg;
+        }
+
+        async function shakeAndReveal() {
+            if (isShaking) return;
+            isShaking = true;
+
+            const el = getActiveBottle();
+            el.style.transform = "none"; 
+
+            el.classList.remove('shaking');
+            void el.offsetWidth; 
+            el.classList.add('shaking');
+
+            try {
+                const res = await fetch("/Poems/Random");
+                if (!res.ok) throw new Error("Could not fetch data.");
+                const data = await res.json();
+
+                setTimeout(() => {
+                    el.classList.remove('shaking');
+                    poemText.textContent  = data.text;
+                    poemAuthor.textContent = data.author;
+                    
+                    poemCard.classList.add('visible');
+                    hint.classList.add('hidden');
+                    isShaking = false; 
+                }, 680);
+
+            } catch (err) {
+                console.error("Database response error: ", err);
+                
+                // Keep the UI interactive even if database data misses
+                setTimeout(() => { 
+                    el.classList.remove('shaking'); 
+                    poemText.textContent = "A quiet whisper remains trapped inside the glass envelope. Check your server connection or database seeding setup.";
+                    poemAuthor.textContent = "System Guardian";
+                    poemCard.classList.add('visible');
+                    hint.classList.add('hidden');
+                    isShaking = false;
+                }, 680);
+            }
+        }
+
+        bottleWrap.addEventListener('click', shakeAndReveal);
+        anotherBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            shakeAndReveal();
+        });
+
+        // Idle vertical bobbing motion script loop
+        let t = 0;
+        function bob() {
+            t += 0.012;
+            const el = getActiveBottle();
+            
+            if (el && !isShaking && !el.classList.contains('shaking')) {
+                const y = Math.sin(t) * 4;
+                el.style.transform = `translateY(${y}px)`;
+            }
+            requestAnimationFrame(bob);
+        }
+        
+        setTimeout(bob, 200);
+    </script>
+}

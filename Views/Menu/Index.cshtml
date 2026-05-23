@@ -1,0 +1,466 @@
+@model IEnumerable<GROUP9PoetryWebsite.Models.Poem>
+@{ ViewData["Title"] = "Menu"; }
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/menuindex.css" asp-append-version="true" />
+}
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav>
+    <a class="nav-logo" href="#">Poetry <em>Haven</em></a>
+    <div class="nav-divider"></div>
+    <div class="nav-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Search poems, poets…"/>
+    </div>
+    <div class="nav-spacer"></div>
+
+    <!-- Notification Bell -->
+    <button class="nav-btn" onclick="toggleNotif()" aria-label="Notifications" style="position:relative;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="badge" id="notifBadge">3</span>
+    </button>
+
+    <!-- Profile Avatar -->
+    <div class="nav-avatar" title="My Profile" onclick="toggleProfile()" style="cursor:pointer;">
+        @(User.Identity.IsAuthenticated ? User.Identity.Name.Substring(0,1).ToUpper() : "G")
+    </div>
+</nav>
+
+<!-- ═══════════════ PROFILE DROPDOWN ═══════════════ -->
+<div id="profileDropdown" class="profile-dropdown" style="display:none;">
+    @if (User.Identity.IsAuthenticated) {
+        <div class="profile-header">
+            <div class="profile-avatar-lg">@User.Identity.Name.Substring(0,1).ToUpper()</div>
+            <div class="profile-details">
+                <p class="profile-username">@User.Identity.Name</p>
+                @* Pull email from claims if available *@
+                <p class="profile-email">@(User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "No email on file")</p>
+            </div>
+        </div>
+        <div class="profile-divider"></div>
+        <a asp-controller="Account" asp-action="ChangePassword" class="profile-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Change Password
+        </a>
+        <div class="profile-divider"></div>
+        <form asp-controller="Menu" asp-action="Logout" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="profile-logout">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Log Out
+            </button>
+        </form>
+    } else {
+        <p class="profile-guest">You are browsing as a guest.</p>
+        <a asp-controller="Account" asp-action="Login" class="profile-link">Log In</a>
+    }
+</div>
+
+<!-- ═══════════════ TOAST BANNER ═══════════════ -->
+@if (TempData["PublishSuccess"] != null) {
+    <div class="toast toast-success" id="toastBanner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M20 6L9 17l-5-5"/>
+        </svg>
+        @TempData["PublishSuccess"]
+    </div>
+}
+@if (TempData["PublishError"] != null) {
+    <div class="toast toast-error" id="toastBanner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        @TempData["PublishError"]
+    </div>
+}
+
+<!-- ═══════════════ MAIN LAYOUT ═══════════════ -->
+<div class="layout">
+
+    <!-- FEED -->
+    <main>
+        <div class="feed-header">
+            <h2>The <em>Feed</em></h2>
+            <div class="feed-tabs">
+                <button class="tab active" onclick="setTab(this,'all')">For You</button>
+                <button class="tab" onclick="setTab(this,'following')">Following</button>
+                <button class="tab" onclick="setTab(this,'new')">New</button>
+            </div>
+        </div>
+
+        <div id="feedList">
+            @foreach (var p in Model) {
+                <article class="poem-card">
+                    <div class="card-head">
+                        <div class="author-avatar">
+                            @(string.IsNullOrEmpty(p.Author) ? "U" : p.Author.Substring(0,1).ToUpper())
+                        </div>
+                        <div class="author-info">
+                            <div class="author-name">@(p.Author ?? "Anonymous")</div>
+                        </div>
+                    </div>
+                    <h3 class="poem-title">@p.Title</h3>
+                    <div class="poem-excerpt">@p.Text</div>
+                    <div class="card-foot">
+                        <button class="foot-btn" onclick="toggleLikeServer(this, '@p.Id')">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" fill="none"/>
+                            </svg>
+                            <span class="like-count">@(p.Likes)</span>
+                        </button>
+                        <a href="#" class="read-more">Read full ↗</a>
+                    </div>
+                </article>
+            }
+        </div>
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <!-- Trending Tags -->
+        <div class="sidebar-block">
+            <p class="sidebar-title">Trending Tags</p>
+            <div class="tag-list">
+                <span class="tag">#loss</span><span class="tag">#nature</span>
+                <span class="tag">#love</span><span class="tag">#solitude</span>
+                <span class="tag">#seasons</span><span class="tag">#memory</span>
+                <span class="tag">#hope</span><span class="tag">#midnight</span>
+                <span class="tag">#ocean</span><span class="tag">#silence</span>
+            </div>
+        </div>
+
+        <!-- Poets to Follow -->
+        <div class="sidebar-block">
+            <p class="sidebar-title">Poets to Follow</p>
+
+            <div class="writer-row">
+                <div class="writer-avatar av-teal">M</div>
+                <div class="writer-info">
+                    <div class="writer-name">Marisol Vega</div>
+                    <div class="writer-poems">34 poems · Lyric</div>
+                </div>
+                <button class="follow-btn" onclick="toggleFollow(this, 'Marisol Vega')">Follow</button>
+            </div>
+
+            <div class="writer-row">
+                <div class="writer-avatar av-rose">J</div>
+                <div class="writer-info">
+                    <div class="writer-name">James Okafor</div>
+                    <div class="writer-poems">21 poems · Elegy</div>
+                </div>
+                <button class="follow-btn" onclick="toggleFollow(this, 'James Okafor')">Follow</button>
+            </div>
+
+            <div class="writer-row">
+                <div class="writer-avatar av-slate">L</div>
+                <div class="writer-info">
+                    <div class="writer-name">Lena Hoang</div>
+                    <div class="writer-poems">58 poems · Haiku</div>
+                </div>
+                <button class="follow-btn" onclick="toggleFollow(this, 'Lena Hoang')">Follow</button>
+            </div>
+
+            <div class="writer-row">
+                <div class="writer-avatar av-peach">D</div>
+                <div class="writer-info">
+                    <div class="writer-name">Diego Ferreira</div>
+                    <div class="writer-poems">17 poems · Narrative</div>
+                </div>
+                <button class="follow-btn" onclick="toggleFollow(this, 'Diego Ferreira')">Follow</button>
+            </div>
+        </div>
+
+        <!-- Write a Poem CTA -->
+        <div class="cta-block">
+            <p>Have words that deserve to be heard? Share your verse with the world.</p>
+            <button class="cta-btn" onclick="openUpload()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Write a Poem
+            </button>
+        </div>
+
+    </aside>
+</div>
+
+<!-- ═══════════════ NOTIFICATIONS PANEL ═══════════════ -->
+<div class="notif-overlay" id="notifOverlay" onclick="closeNotif(event)">
+    <div class="notif-panel">
+        <div class="notif-head">
+            <span>Notifications</span>
+            <button class="notif-clear" onclick="clearNotifs()">Mark all read</button>
+        </div>
+        <div id="notifList">
+            <!-- Dynamically populated by JS below -->
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ UPLOAD / WRITE POEM MODAL ═══════════════ -->
+<div class="modal-overlay" id="uploadModal" onclick="closeModalOutside(event)">
+    <form asp-controller="Menu" asp-action="Create" method="post" class="modal">
+        @Html.AntiForgeryToken()
+        <div class="modal-head">
+            <h3>Share a <em>Verse</em></h3>
+            <button type="button" class="modal-close" onclick="closeUpload()">✕</button>
+        </div>
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" name="Title" placeholder="Give your poem a title…" required />
+        </div>
+        <div class="form-group">
+            <label>Your Verse</label>
+            <textarea name="Text" placeholder="Write your poem here…" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>Genre</label>
+            <select name="Genre">
+                <option>Lyric</option>
+                <option>Haiku</option>
+                <option>Sonnet</option>
+                <option>Free Verse</option>
+                <option>Elegy</option>
+                <option>Narrative</option>
+            </select>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn-cancel" onclick="closeUpload()">Cancel</button>
+            <button type="submit" class="btn-publish">Publish</button>
+        </div>
+    </form>
+</div>
+
+<!-- ═══════════════ INLINE STYLES FOR NEW ELEMENTS ═══════════════ -->
+<style>
+    /* Profile Dropdown */
+    .profile-dropdown {
+        position: absolute;
+        right: 1.5rem;
+        top: 4.2rem;
+        background: #fff;
+        border: 1px solid #e8e0d5;
+        border-radius: 12px;
+        padding: 1.2rem;
+        z-index: 3000;
+        min-width: 230px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 0.6rem;
+    }
+    .profile-avatar-lg {
+        width: 42px; height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #c8955a, #a0714a);
+        color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; font-weight: 700;
+        flex-shrink: 0;
+    }
+    .profile-username {
+        font-weight: 700; font-size: 0.95rem; margin: 0; color: #2c2c2c;
+    }
+    .profile-email {
+        font-size: 0.78rem; color: #888; margin: 0.15rem 0 0;
+        word-break: break-all;
+    }
+    .profile-divider {
+        height: 1px; background: #f0ebe4; margin: 0.7rem 0;
+    }
+    .profile-link {
+        display: flex; align-items: center; gap: 0.5rem;
+        text-decoration: none; color: #4a4a4a;
+        font-size: 0.88rem; padding: 0.4rem 0;
+        transition: color 0.2s;
+    }
+    .profile-link:hover { color: #c8955a; }
+    .profile-logout {
+        display: flex; align-items: center; gap: 0.5rem;
+        background: none; border: none; color: #c0392b;
+        font-size: 0.88rem; cursor: pointer; padding: 0.4rem 0;
+        width: 100%; transition: opacity 0.2s;
+    }
+    .profile-logout:hover { opacity: 0.75; }
+    .profile-guest { font-size: 0.85rem; color: #888; margin: 0 0 0.5rem; }
+
+    /* Notification items */
+    .notif-item { display:flex; align-items:flex-start; gap:0.7rem; padding:0.75rem 0; border-bottom:1px solid #f0ebe4; }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-dot { width:8px; height:8px; border-radius:50%; background:#c8955a; flex-shrink:0; margin-top:5px; }
+    .notif-dot.read { background:#ddd; }
+    .notif-item.unread { background: rgba(200,149,90,0.05); margin: 0 -0.5rem; padding: 0.75rem 0.5rem; border-radius: 6px; }
+    .notif-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; flex-shrink:0; color:#fff; }
+    .notif-text { font-size:0.85rem; color:#3a3a3a; line-height:1.4; }
+    .notif-time { font-size:0.75rem; color:#aaa; margin-top:0.2rem; }
+
+    /* Follow button states */
+    .follow-btn.following {
+        background: rgba(200,149,90,0.15);
+        color: #c8955a;
+        border-color: #c8955a;
+    }
+
+    /* Toast notifications */
+    .toast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.85rem 1.4rem;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        z-index: 9999;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+        animation: toastIn 0.35s ease, toastOut 0.4s ease 3.5s forwards;
+        white-space: nowrap;
+    }
+    .toast-success { background: #2d6a4f; color: #fff; }
+    .toast-error   { background: #c0392b; color: #fff; }
+    @@keyframes toastIn  { from { opacity:0; transform:translateX(-50%) translateY(1rem); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+    @@keyframes toastOut { from { opacity:1; } to { opacity:0; pointer-events:none; } }
+</style>
+
+<script>
+    // ─── TOAST AUTO-REMOVE ────────────────────────────────────────────────────
+    const toast = document.getElementById('toastBanner');
+    if (toast) setTimeout(() => toast.remove(), 4000);
+
+    // Re-open modal if there was a publish error (e.g. validation failed)
+    @if (TempData["PublishError"] != null) {
+        <text>openUpload();</text>
+    }
+
+    // ─── NOTIFICATION DATA ─────────────────────────────────────────────────────
+    const NOTIFICATIONS = [
+        { type:'like',      unread:true,  av:'av-teal',  initial:'M', actor:'Marisol Vega',  poem:'"Ashes at Dawn"',   time:'2 minutes ago' },
+        { type:'like',      unread:true,  av:'av-slate',  initial:'L', actor:'Lena Hoang',    poem:'"Still Water"',     time:'15 minutes ago' },
+        { type:'follow',    unread:true,  av:'av-rose',  initial:'J', actor:'James Okafor',  poem:null,               time:'1 hour ago' },
+        { type:'followback',unread:false, av:'av-peach', initial:'D', actor:'Diego Ferreira',poem:null,               time:'Yesterday' },
+        { type:'like',      unread:false, av:'av-sage',  initial:'R', actor:'Riya Mehta',    poem:'"Tidal"',          time:'2 days ago' },
+    ];
+
+    function notifMessage(n) {
+        if (n.type === 'like')       return `<strong>${n.actor}</strong> liked your poem <strong>${n.poem}</strong>`;
+        if (n.type === 'follow')     return `<strong>${n.actor}</strong> started following you`;
+        if (n.type === 'followback') return `<strong>${n.actor}</strong> followed you back`;
+        return '';
+    }
+
+    function renderNotifs(list) {
+        document.getElementById('notifList').innerHTML = list.map(n => `
+            <div class="notif-item ${n.unread ? 'unread' : ''}">
+                <div class="notif-dot ${n.unread ? '' : 'read'}"></div>
+                <div class="notif-avatar ${n.av}">${n.initial}</div>
+                <div>
+                    <div class="notif-text">${notifMessage(n)}</div>
+                    <div class="notif-time">${n.time}</div>
+                </div>
+            </div>`).join('');
+    }
+
+    renderNotifs(NOTIFICATIONS);
+
+    // Keep badge count = number of unread
+    function updateBadge() {
+        const count = NOTIFICATIONS.filter(n => n.unread).length;
+        const badge = document.getElementById('notifBadge');
+        badge.textContent = count > 0 ? count : '';
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+    updateBadge();
+
+    // ─── FOLLOW LOGIC (with follow-back notification) ──────────────────────────
+    function toggleFollow(btn, authorName) {
+        const isFollowing = btn.classList.contains('following');
+        if (isFollowing) {
+            btn.textContent = 'Follow';
+            btn.classList.remove('following');
+        } else {
+            btn.textContent = 'Following';
+            btn.classList.add('following');
+            // Add "You followed X" entry and simulate possible follow-back
+            addNotif({ type:'follow', unread:true, av:'av-amber', initial:'Y', actor:`You followed ${authorName}`, poem:null, time:'Just now' });
+            // 50% chance they follow back (for demo; replace with real server logic)
+            if (Math.random() > 0.5) {
+                setTimeout(() => {
+                    addNotif({ type:'followback', unread:true, av:'av-amber', initial: authorName[0], actor:authorName, poem:null, time:'Just now' });
+                }, 2000);
+            }
+        }
+    }
+
+    function addNotif(notif) {
+        NOTIFICATIONS.unshift(notif);
+        renderNotifs(NOTIFICATIONS);
+        updateBadge();
+    }
+
+    // ─── LIKE (client-side toggle; wire to server as needed) ──────────────────
+    function toggleLikeServer(btn, poemId) {
+        const path = btn.querySelector('path');
+        const countEl = btn.querySelector('.like-count');
+        const liked = btn.classList.toggle('liked');
+        let count = parseInt(countEl.textContent) || 0;
+        countEl.textContent = liked ? count + 1 : count - 1;
+        if (liked) { path.setAttribute('fill','#c0392b'); path.setAttribute('stroke','#c0392b'); }
+        else { path.removeAttribute('fill'); path.setAttribute('stroke','currentColor'); }
+        // Optionally POST to server:
+        // fetch(`/Menu/ToggleLike/${poemId}`, { method:'POST', headers:{'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value} });
+    }
+
+    // ─── TABS ──────────────────────────────────────────────────────────────────
+    function setTab(el, mode) {
+        el.closest('.feed-tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    // ─── NOTIF PANEL ──────────────────────────────────────────────────────────
+    function toggleNotif() { document.getElementById('notifOverlay').classList.toggle('open'); }
+    function closeNotif(e) { if (e.target.id === 'notifOverlay') document.getElementById('notifOverlay').classList.remove('open'); }
+    function clearNotifs() {
+        NOTIFICATIONS.forEach(n => n.unread = false);
+        renderNotifs(NOTIFICATIONS);
+        updateBadge();
+    }
+
+    // ─── PROFILE DROPDOWN ─────────────────────────────────────────────────────
+    function toggleProfile() {
+        const d = document.getElementById('profileDropdown');
+        d.style.display = (d.style.display === 'none' || d.style.display === '') ? 'block' : 'none';
+    }
+    // Close profile dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('profileDropdown');
+        const avatar = document.querySelector('.nav-avatar');
+        if (dropdown && avatar && !dropdown.contains(e.target) && !avatar.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // ─── UPLOAD MODAL ─────────────────────────────────────────────────────────
+    function openUpload()  { document.getElementById('uploadModal').classList.add('open'); }
+    function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); }
+    function closeModalOutside(e) { if (e.target.id === 'uploadModal') closeUpload(); }
+</script>

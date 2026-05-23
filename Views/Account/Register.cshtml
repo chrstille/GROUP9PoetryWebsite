@@ -1,0 +1,50 @@
+@model GROUP9PoetryWebsite.Models.Registration
+@{
+    Layout = null; // Keeps the view independent, but we drop the wrapper tags!
+    ViewData["Title"] = "Create Account";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="~/css/acc.css" asp-append-version="true" />
+
+<div class="auth-page-wrapper">
+    <div class="auth-card">
+        <h2>Join the Stage</h2>
+        <p class="subtitle">Secure a bottle for your silent whispers</p>
+
+        <form asp-action="Register" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label asp-for="Username"></label>
+                <input asp-for="Username" autocomplete="off" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" type="email" autocomplete="off" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Password"></label>
+                <input asp-for="Password" type="password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ConfirmPassword"></label>
+                <input asp-for="ConfirmPassword" type="password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn-submit">Sign Up</button>
+        </form>
+
+        <p class="switch-prompt">
+            Already have an account? <a href="/Account/Login">Log In</a>
+        </p>
+    </div>
+</div>

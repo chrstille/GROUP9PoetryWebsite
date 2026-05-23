@@ -1,0 +1,139 @@
+/* ── Unified Glassmorphic Authentication Layout ── */
+*, *::before, *::after { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+}
+
+.auth-page-wrapper {
+    font-family: 'Jost', sans-serif;
+    background: linear-gradient(145deg, #fdf6ee 0%, #f4e9d8 50%, #ecdbc6 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.auth-card {
+    position: relative; /* CRITICAL: z-index only works if position is specified */
+    z-index: 10;        /* Pulls the form card above background decorations and animations */
+    
+    width: min(440px, 100%);
+    background: rgba(255, 248, 238, 0.72);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border: 1px solid rgba(200, 160, 100, 0.28);
+    border-radius: 18px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 40px rgba(140, 100, 50, 0.1);
+    text-align: center;
+}
+
+h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 2rem;
+    color: #3a2e26;
+    margin-bottom: 0.3rem;
+}
+
+.subtitle {
+    font-size: 0.78rem;
+    color: #7a6a5a;
+    letter-spacing: 0.05em;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 1.2rem;
+}
+
+label {
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #c8965a;
+    display: block;
+    margin-bottom: 0.4rem;
+    padding-left: 4px;
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(200, 150, 90, 0.2);
+    border-radius: 30px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    color: #3a2e26;
+    outline: none;
+    transition: all 0.25s ease;
+}
+
+input:focus {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: #c8965a;
+    box-shadow: 0 0 10px rgba(200, 150, 90, 0.15);
+}
+
+.text-danger {
+    font-size: 0.7rem;
+    color: #b84a39;
+    margin-top: 0.3rem;
+    display: block;
+    padding-left: 10px;
+}
+
+.summary-validation { 
+    background: rgba(184, 74, 57, 0.08); 
+    border-left: 3px solid #b84a39; 
+    padding: 0.5rem; 
+    margin-bottom: 1rem; 
+    border-radius: 0 8px 8px 0; 
+    text-align: left; 
+    font-size: 0.75rem; 
+    color: #b84a39; 
+    list-style-position: inside; 
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 0.75rem;
+    background: #c8965a;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 1rem;
+    box-shadow: 0 4px 15px rgba(200, 150, 90, 0.2);
+    transition: all 0.25s ease;
+}
+
+.btn-submit:hover {
+    background: #e8b87a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(232, 184, 122, 0.35);
+}
+
+.switch-prompt {
+    margin-top: 1.5rem;
+    font-size: 0.75rem;
+    color: #7a6a5a;
+}
+
+.switch-prompt a {
+    color: #c8965a;
+    text-decoration: none;
+    font-weight: 400;
+}
+
+.switch-prompt a:hover {
+    text-decoration: underline;
+}

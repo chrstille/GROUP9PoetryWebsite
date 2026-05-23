@@ -1,0 +1,32 @@
+@model List<Poem>
+
+<h2>Poetry Feed</h2>
+
+@foreach(var poem in Model)
+{
+    <div class="card p-3 mb-3">
+
+        <h3>@poem.Title</h3>
+
+        <h6>@poem.Author</h6>
+
+        <p>@poem.Text</p>
+
+        <form asp-action="Like">
+
+            <input
+                type="hidden"
+                name="id"
+                value="@poem.Id"/>
+
+            <button
+                class="btn btn-danger">
+
+                ❤️ @poem.LikesCount
+
+            </button>
+
+        </form>
+
+    </div>
+}
