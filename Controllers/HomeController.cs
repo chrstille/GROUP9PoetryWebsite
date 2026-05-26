@@ -15,6 +15,8 @@ namespace GROUP9PoetryWebsite.Controllers
         }
        public IActionResult Index()
         {
+            // If already logged in, skip straight to the feed
+            if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Menu");
             if (_context == null) 
             {
                 return Content("CRITICAL ERROR: _context is null. Check your Dependency Injection in Program.cs!");

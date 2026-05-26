@@ -1,11 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authentication; // Required for SignOutAsync
-using Microsoft.AspNetCore.Authentication.Cookies; // Required for CookieAuthenticationDefaults
 using GROUP9PoetryWebsite.Data;
 using GROUP9PoetryWebsite.Models;
+using Microsoft.AspNetCore.Authentication; // Required for SignOutAsync
+using Microsoft.AspNetCore.Authentication.Cookies; // Required for CookieAuthenticationDefaults
+using Microsoft.AspNetCore.Authorization; // Required for async methods
+using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization; // Required for async methods
+using System;
 
 namespace GROUP9PoetryWebsite.Controllers
 {
@@ -16,11 +17,21 @@ namespace GROUP9PoetryWebsite.Controllers
         public MenuController(AppDbContext context)
         {
             _context = context;
+
+            // Quick Debug: Test connection manually
+            if (!_context.Database.CanConnect())
+            {
+                throw new Exception("Cannot connect to the database. Check your connection string in appsettings.json.");
+            }
         }
 
         public IActionResult Index()
         {
+            var count = _context.Poems.Count();
             var poems = _context.Poems.ToList();
+
+            ViewBag.PoemCount = count;
+
             return View(poems);
         }
 

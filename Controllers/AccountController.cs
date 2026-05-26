@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
-using System.Collections.Generic; 
-using System.Linq;               
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using GROUP9PoetryWebsite.Data;
 using GROUP9PoetryWebsite.Models;
@@ -23,7 +23,8 @@ namespace GROUP9PoetryWebsite.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+            // If already logged in, skip straight to the feed
+            if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Menu");
             return View();
         }
 
@@ -50,10 +51,7 @@ namespace GROUP9PoetryWebsite.Controllers
             _context.Users.Add(user);
             _context.SaveChanges();
 
-            // Set the message for the next page
             TempData["Message"] = "Registration successful! Please log in.";
-            
-            // Redirect to the Login action
             return RedirectToAction("Login", "Account");
         }
 
@@ -61,27 +59,26 @@ namespace GROUP9PoetryWebsite.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+            // If already logged in, skip straight to the feed
+            if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Menu");
             return View();
         }
 
         // POST: /Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(Login model) // Updated name here
+        public async Task<IActionResult> Login(Login model)
         {
             if (!ModelState.IsValid) return View(model);
 
             var user = _context.Users.FirstOrDefault(u => u.Username == model.Username);
 
-            // Check credentials
             if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
             {
                 ModelState.AddModelError(string.Empty, "Invalid username or password.");
                 return View(model);
             }
 
-            // Create cookie authentication ticket data payload
             var claims = new List<Claim> {
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
@@ -89,7 +86,15 @@ namespace GROUP9PoetryWebsite.Controllers
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                new AuthenticationProperties
+                {
+                    // Session cookie: expires when the browser is closed
+                    IsPersistent = false
+                }
+            );
 
             return RedirectToAction("Index", "Menu");
         }
