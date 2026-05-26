@@ -301,6 +301,12 @@ nav {
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(140,100,60,0.06);
+
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+    display: flex;
+    flex-direction: column;
 }
 
     /* Gold left accent bar */
@@ -477,6 +483,15 @@ nav {
     color: var(--ink-light);
     white-space: pre-line;
     position: relative;
+
+    max-height: 150px;
+    overflow: hidden;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+
+    /* Optional: Fades out the text at the bottom */
+    mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
 }
 
     .poem-excerpt::after {
