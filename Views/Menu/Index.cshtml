@@ -387,7 +387,7 @@
     .poem-id {
         font-size: 0.75rem;
         color: #D3AB79;
-        font-family: monospace; /* Optional: gives it a nice 'ID' look */
+        font-family: monospace; 
     }
     .poem-card-header {
         display: flex !important;
@@ -465,21 +465,21 @@
         width: 100%;
         max-width: 1100px; 
         margin: 0 auto;
-        /* Optional: Ensure it doesn't try to shrink smaller than a certain point */
+        
         min-width: 800px; 
     }
     main {
         width: 100%;
     }
     html {
-        /* This forces a vertical scrollbar to always exist */
+        
         overflow-y: scroll; 
     }
 
     .poem-excerpt {
-        max-height: 100px;        /* Adjust to your desired pixel height */
-        overflow: hidden;         /* Clips the content that exceeds max-height */
-        position: relative;       /* Useful for the fading effect below */
+        max-height: 100px;        
+        overflow: hidden;         
+        position: relative;       
     }
     .poem-excerpt::after {
         content: "";
@@ -491,9 +491,6 @@
         background: linear-gradient(transparent, #ffffff);
         pointer-events: none;
     }
-    .main-layout-container { border: 2px solid red; }
-    #feedList { border: 2px solid blue; }
-    .sidebar { border: 2px solid green; }
 </style>
 
 <script>
