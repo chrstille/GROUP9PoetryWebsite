@@ -454,8 +454,7 @@
     
     .poem-card {
         transition: opacity 0.3s ease;
-        height: 300px;
-        padding-bottom: 20px;
+        padding-bottom: 15px;
     }
     .main-layout-container {
         display: grid;
@@ -475,6 +474,22 @@
     html {
         /* This forces a vertical scrollbar to always exist */
         overflow-y: scroll; 
+    }
+
+    .poem-excerpt {
+        max-height: 100px;        /* Adjust to your desired pixel height */
+        overflow: hidden;         /* Clips the content that exceeds max-height */
+        position: relative;       /* Useful for the fading effect below */
+    }
+    .poem-excerpt::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40px;
+        background: linear-gradient(transparent, #ffffff);
+        pointer-events: none;
     }
     .main-layout-container { border: 2px solid red; }
     #feedList { border: 2px solid blue; }
