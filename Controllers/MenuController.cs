@@ -32,7 +32,7 @@ namespace GROUP9PoetryWebsite.Controllers
             var username = User.Identity?.Name;
 
             // Get all poems
-            var poems = _context.Poems.ToList();
+            var poems = _context.Poems.OrderByDescending(p => p.Id).ToList();
 
             // Store IDs of poems liked by the current user
             ViewBag.LikedPoemIds = new HashSet<int>();
