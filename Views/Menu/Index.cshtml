@@ -13,7 +13,7 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
         </svg>
-        <input type="text" placeholder="Search poems, poets…"/>
+        <input type="text" id="poemSearch" onkeyup="filterPoems()" placeholder="Search poems, poets…"/>
     </div>
     <div class="nav-spacer"></div>
 
@@ -101,6 +101,8 @@
             </div>
         </div>
 
+        <div class="main-layout-container">
+            
         <div id="feedList">
             @foreach (var p in Model) {
                 <article class="poem-card">
@@ -139,6 +141,10 @@
                     </div>
                 </article>
             }
+
+            <div id="noResults" style="display:none; text-align:center; padding: 2rem; color: #aaa;">
+                No poems or poets found matching your search.
+            </div>
         </div>
     </main>
 
@@ -210,6 +216,7 @@
         </div>
 
     </aside>
+        </div>
 </div>
 
 <!-- ═══════════════ NOTIFICATIONS PANEL ═══════════════ -->
@@ -241,6 +248,7 @@
             <label>Your Verse</label>
             <textarea name="Text" placeholder="Write your poem here…" required></textarea>
         </div>
+        @*
         <div class="form-group">
             <label>Genre</label>
             <select name="Genre">
@@ -252,6 +260,7 @@
                 <option>Narrative</option>
             </select>
         </div>
+        *@
         <div class="modal-foot">
             <button type="button" class="btn-cancel" onclick="closeUpload()">Cancel</button>
             <button type="submit" class="btn-publish">Publish</button>
@@ -419,6 +428,9 @@
         white-space: pre-wrap;
         border-top: 1px solid #f0ebe4;
         padding-top: 1.5rem;
+
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
 
     #readModalTitle {
@@ -427,7 +439,46 @@
         margin-bottom: 0.5rem;
         font-style: italic;
     }
-
+    
+    .poem-card.hidden {
+        display: none !important;
+    }
+    #feedList {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        /* IMPORTANT: This prevents the feedList from shrinking when empty */
+        min-height: 80vh; 
+        width: 100%;
+    }
+    
+    .poem-card {
+        transition: opacity 0.3s ease;
+        height: 300px;
+        padding-bottom: 20px;
+    }
+    .main-layout-container {
+        display: grid;
+        /* Explicit columns keep the sidebar position locked */
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 20px;
+        align-items: start;
+        width: 100%;
+        max-width: 1100px; 
+        margin: 0 auto;
+        /* Optional: Ensure it doesn't try to shrink smaller than a certain point */
+        min-width: 800px; 
+    }
+    main {
+        width: 100%;
+    }
+    html {
+        /* This forces a vertical scrollbar to always exist */
+        overflow-y: scroll; 
+    }
+    .main-layout-container { border: 2px solid red; }
+    #feedList { border: 2px solid blue; }
+    .sidebar { border: 2px solid green; }
 </style>
 
 <script>
@@ -568,22 +619,46 @@
         if (e.target.id === 'readModal') closeReadModal();
     }
 
+    // ─── LIKE (Server-side update) ──────────────────
     async function toggleLikeServer(btn, poemId) {
-    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-    const path = btn.querySelector('path');
-    const countEl = btn.querySelector('.like-count');
-    
-    const response = await fetch(`/Menu/ToggleLike?poemId=${poemId}`, {
-        method: 'POST',
-        headers: { 'RequestVerificationToken': token }
-    });
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const path = btn.querySelector('path');
+        const countEl = btn.querySelector('.like-count');
+        
+        const response = await fetch(`/Menu/ToggleLike?poemId=${poemId}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': token }
+        });
 
-    if (response.ok) {
-        const result = await response.json();
-        countEl.textContent = result.newCount;
-        btn.classList.toggle('liked', result.liked);
-        path.setAttribute('fill', result.liked ? '#c0392b' : 'none');
-        path.setAttribute('stroke', result.liked ? '#c0392b' : 'currentColor');
+        if (response.ok) {
+            const result = await response.json();
+            countEl.textContent = result.newCount;
+            btn.classList.toggle('liked', result.liked);
+            path.setAttribute('fill', result.liked ? '#c0392b' : 'none');
+            path.setAttribute('stroke', result.liked ? '#c0392b' : 'currentColor');
+        }
     }
-}
+
+    // ─── SEARCH FUNCTIONALITY ────────────────────────
+    function filterPoems() {
+        const input = document.getElementById('poemSearch');
+        const filter = input.value.toLowerCase();
+        const feedList = document.getElementById('feedList');
+        const poems = feedList.getElementsByClassName('poem-card');
+        let hasVisible = false;
+
+        for (let i = 0; i < poems.length; i++) {
+            const title = poems[i].querySelector('.poem-title').innerText.toLowerCase();
+            const author = poems[i].querySelector('.author-name').innerText.toLowerCase();
+    
+            if (title.includes(filter) || author.includes(filter)) {
+                poems[i].classList.remove('hidden'); // Remove the hiding class
+                hasVisible = true;
+            } else {
+                poems[i].classList.add('hidden');    // Add the hiding class
+            }
+        }
+
+        document.getElementById('noResults').style.display = hasVisible ? 'none' : 'block';
+    }
 </script>
