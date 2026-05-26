@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GROUP9PoetryWebsite.Models;
 
@@ -14,5 +15,5 @@ public class Poem
 
     public int LikesCount { get; set; }
 
-   public List<PoemLike> Likes { get; set; } = new();
+    public List<PoemLike> Likes { get; set; } = new();
 }
