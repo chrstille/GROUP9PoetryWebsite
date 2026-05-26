@@ -104,12 +104,16 @@
         <div id="feedList">
             @foreach (var p in Model) {
                 <article class="poem-card">
-                    <div class="card-head">
-                        <div class="author-avatar">
-                            @(string.IsNullOrEmpty(p.Author) ? "U" : p.Author.Substring(0,1).ToUpper())
-                        </div>
-                        <div class="author-info">
+                    <div class="poem-card-header">
+                        <div class="poem-author-info">
+                            <div class="author-avatar">
+                                @(string.IsNullOrEmpty(p.Author) ? "U" : p.Author.Substring(0,1).ToUpper())
+                            </div>
                             <div class="author-name">@(p.Author ?? "Anonymous")</div>
+                        </div>
+    
+                        <div class="poem-id">
+                            #@p.Id
                         </div>
                     </div>
                     <h3 class="poem-title">@p.Title</h3>
@@ -362,6 +366,27 @@
     .toast-error   { background: #c0392b; color: #fff; }
     @@keyframes toastIn  { from { opacity:0; transform:translateX(-50%) translateY(1rem); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
     @@keyframes toastOut { from { opacity:1; } to { opacity:0; pointer-events:none; } }
+
+
+    /* This is for displaying Poem ID at the topright corner*/
+    .poem-id {
+        font-size: 0.75rem;
+        color: #ccc;
+        font-family: monospace; /* Optional: gives it a nice 'ID' look */
+    }
+    .poem-card-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .poem-author-info {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
 </style>
 
 <script>
