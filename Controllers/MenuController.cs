@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Authentication; // Required for SignOutAsync
 using Microsoft.AspNetCore.Authentication.Cookies; // Required for CookieAuthenticationDefaults
 using Microsoft.AspNetCore.Authorization; // Required for async methods
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore; // Required for async database operations
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System;
 
 namespace GROUP9PoetryWebsite.Controllers
 {
@@ -27,12 +29,59 @@ namespace GROUP9PoetryWebsite.Controllers
 
         public IActionResult Index()
         {
-            var count = _context.Poems.Count();
+            var username = User.Identity?.Name;
+
+            // Get all poems
             var poems = _context.Poems.ToList();
 
-            ViewBag.PoemCount = count;
+            // Store IDs of poems liked by the current user
+            ViewBag.LikedPoemIds = new HashSet<int>();
+            if (username != null)
+            {
+                ViewBag.LikedPoemIds = _context.Likes
+                    .Where(l => l.Username == username)
+                    .Select(l => l.PoemId)
+                    .ToHashSet();
+            }
 
+            ViewBag.PoemCount = poems.Count;
             return View(poems);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleLike(int poemId)
+        {
+            var username = User.Identity?.Name;
+            if (username == null) return Unauthorized();
+
+            // Check if the user already liked this poem
+            var existingLike = await _context.Likes
+                .FirstOrDefaultAsync(l => l.PoemId == poemId && l.Username == username);
+
+            var poem = await _context.Poems.FindAsync(poemId);
+            if (poem == null) return NotFound();
+
+            bool isNowLiked;
+
+            if (existingLike != null)
+            {
+                // Remove like
+                _context.Likes.Remove(existingLike);
+                poem.LikesCount = Math.Max(0, poem.LikesCount - 1);
+                isNowLiked = false;
+            }
+            else
+            {
+                // Add like
+                _context.Likes.Add(new PoemLike { PoemId = poemId, Username = username });
+                poem.LikesCount++;
+                isNowLiked = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, liked = isNowLiked, newCount = poem.LikesCount });
         }
 
         [Authorize]

@@ -115,13 +115,18 @@
                     <h3 class="poem-title">@p.Title</h3>
                     <div class="poem-excerpt">@p.Text</div>
                     <div class="card-foot">
-                        <button class="foot-btn" onclick="toggleLikeServer(this, '@p.Id')">
+                        @{
+                            // Check if the current user liked this specific poem
+                            bool isLiked = ((HashSet<int>)ViewBag.LikedPoemIds).Contains(p.Id);
+                        }
+                        <button class="foot-btn @(isLiked ? "liked" : "")" onclick="toggleLikeServer(this, '@p.Id')">
                             <svg viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" fill="none"/>
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" 
+                                      stroke="@(isLiked ? "#c0392b" : "currentColor")" 
+                                      fill="@(isLiked ? "#c0392b" : "none")" />
                             </svg>
-                            <span class="like-count">@(p.LikesCount)</span>
+                            <span class="like-count">@p.LikesCount</span>
                         </button>
-                        <a href="#" class="read-more">Read full ↗</a>
                     </div>
                 </article>
             }
@@ -243,6 +248,23 @@
             <button type="submit" class="btn-publish">Publish</button>
         </div>
     </form>
+</div>
+
+<!-- ═══════════════ READ FULL POEM MODAL ═══════════════ -->
+<div class="modal-overlay" id="readModal" onclick="closeReadModalOutside(event)">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>Author: </h3><h3 id="readModalAuthor">Poem Author</h3>
+            <button type="button" class="modal-close" onclick="closeReadModal()">✕</button>
+        </div>
+        <div class="modal-body" style="padding: 1rem 0; line-height: 1.6; color: #4a4a4a; white-space: pre-wrap;">
+            <h3 id="readModalTitle">Poem Title</h3>
+            <p id="readModalText"></p>
+        </div>
+        <div class="modal-foot">
+            <button class="btn-cancel" onclick="closeReadModal()">Close</button>
+        </div>
+    </div>
 </div>
 
 <!-- ═══════════════ INLINE STYLES FOR NEW ELEMENTS ═══════════════ -->
@@ -463,4 +485,39 @@
     function openUpload()  { document.getElementById('uploadModal').classList.add('open'); }
     function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); }
     function closeModalOutside(e) { if (e.target.id === 'uploadModal') closeUpload(); }
+
+    // ─── READ FULL POEM MODAL ──────────────────────────────────────────────────
+    function openReadModal(title, text, author) {
+        document.getElementById('readModalAuthor').textContent = author;
+        document.getElementById('readModalTitle').textContent = title;
+        document.getElementById('readModalText').textContent = text;
+        document.getElementById('readModal').classList.add('open');
+    }
+
+    function closeReadModal() {
+        document.getElementById('readModal').classList.remove('open');
+    }
+
+    function closeReadModalOutside(e) {
+        if (e.target.id === 'readModal') closeReadModal();
+    }
+
+    async function toggleLikeServer(btn, poemId) {
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    const path = btn.querySelector('path');
+    const countEl = btn.querySelector('.like-count');
+    
+    const response = await fetch(`/Menu/ToggleLike?poemId=${poemId}`, {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': token }
+    });
+
+    if (response.ok) {
+        const result = await response.json();
+        countEl.textContent = result.newCount;
+        btn.classList.toggle('liked', result.liked);
+        path.setAttribute('fill', result.liked ? '#c0392b' : 'none');
+        path.setAttribute('stroke', result.liked ? '#c0392b' : 'currentColor');
+    }
+}
 </script>
