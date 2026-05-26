@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GROUP9PoetryWebsite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260526070030_Initial1")]
-    partial class Initial1
+    [Migration("20260526104311_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
