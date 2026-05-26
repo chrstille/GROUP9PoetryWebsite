@@ -131,6 +131,11 @@
                             </svg>
                             <span class="like-count">@p.LikesCount</span>
                         </button>
+                        <a href="javascript:void(0)" 
+                           class="read-more" 
+                           onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author')">
+                            Read full ↗
+                        </a>
                     </div>
                 </article>
             }
@@ -256,14 +261,15 @@
 
 <!-- ═══════════════ READ FULL POEM MODAL ═══════════════ -->
 <div class="modal-overlay" id="readModal" onclick="closeReadModalOutside(event)">
-    <div class="modal">
+    <div class="modal read-modal">
         <div class="modal-head">
-            <h3>Author: </h3><h3 id="readModalAuthor">Poem Author</h3>
+            <h3>Poem</h3>
             <button type="button" class="modal-close" onclick="closeReadModal()">✕</button>
         </div>
-        <div class="modal-body" style="padding: 1rem 0; line-height: 1.6; color: #4a4a4a; white-space: pre-wrap;">
-            <h3 id="readModalTitle">Poem Title</h3>
-            <p id="readModalText"></p>
+        <div class="modal-body">
+            <h2 id="readModalTitle" class="read-poem-title">Poem Title</h2>
+            <p class="read-author">by <span id="readModalAuthor">Author Name</span></p>
+            <div id="readModalText" class="read-text"></div>
         </div>
         <div class="modal-foot">
             <button class="btn-cancel" onclick="closeReadModal()">Close</button>
@@ -385,6 +391,41 @@
         display: flex !important;
         align-items: center !important;
         gap: 0.5rem !important;
+    }
+
+    /* This is for read full poem modal */
+    .read-modal {
+        max-width: 600px;
+        padding: 2rem;
+        
+        font-family: var(--serif);
+        font-size: 1.22rem;
+        font-weight: 400;
+        color: var(--ink);
+    }
+
+    .read-author {
+        font-size: 0.95rem;
+        color: #a0714a;
+        margin: -0.5rem 0 1.5rem 0;
+        font-style: italic;
+    }
+
+    .read-text {
+        line-height: 1.8;
+        color: #333;
+        font-size: 1.1rem;
+        /* font-family: 'Georgia', serif;  A classic serif font looks better for poetry */
+        white-space: pre-wrap;
+        border-top: 1px solid #f0ebe4;
+        padding-top: 1.5rem;
+    }
+
+    #readModalTitle {
+        font-size: 1.8rem;
+        color: #2c2c2c;
+        margin-bottom: 0.5rem;
+        font-style: italic;
     }
 
 </style>
