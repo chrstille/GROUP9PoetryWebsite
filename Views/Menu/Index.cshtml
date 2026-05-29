@@ -171,10 +171,14 @@
                                 </svg>
                                 Save
                             </button>
-
+                            @if (p.Anthology.Id != 1) // 1 is the default number for poems not belonging to an anthology
+                            {
+                                <hr style="border-left: 1px solid var(--ph-accent); height: 25px">
+                                <button class="ph-bookmark-btn">Anthology: <i>@p.Anthology.Title</i></button>
+                            }
                             <a href="javascript:void(0)"
                                class="ph-read-more"
-                               onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author')">
+                               onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author', '@p.Anthology.Title')">
                                 Read full ↗
                             </a>
                         </div>
@@ -341,10 +345,267 @@
         <p class="ph-read-author">by <span id="readModalAuthor">—</span></p>
         <div class="ph-read-text" id="readModalText"></div>
         <div class="ph-modal-foot" style="margin-top:1.5rem;">
-            <button class="ph-btn-cancel" onclick="closeReadModal()">Close</button>
+            <button id="readModalAnthologyTitle" class="ph-btn-cancel"></button>
         </div>
     </div>
 </div>
+
+
+<script>
+    // Toast auto-dismiss
+    const toast = document.getElementById('toastBanner');
+    if (toast) setTimeout(() => toast.remove(), 4000);
+
+    @if (TempData["PublishError"] != null)
+    {
+            <text>openUpload();</text>
+    }
+
+    // ── Verse of the Day ──────────────────────────────────────────────────
+    const QUOTES = [
+        { text: '"Two roads diverged in a wood, and I — I took the one less traveled by."', attr: '— Robert Frost' },
+        { text: '"Hold fast to dreams, for if dreams die, life is a broken-winged bird."', attr: '— Langston Hughes' },
+        { text: '"Still I rise, like dust, I\'ll rise."', attr: '— Maya Angelou' },
+        { text: '"Once upon a midnight dreary, while I pondered, weak and weary…"', attr: '— Edgar Allan Poe' },
+        { text: '"The woods are lovely, dark and deep, but I have promises to keep."', attr: '— Robert Frost' },
+    ];
+    const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    document.getElementById('qotdText').textContent = q.text;
+    document.getElementById('qotdAttr').textContent = q.attr;
+
+    // ── Notifications ─────────────────────────────────────────────────────
+    const NOTIFICATIONS = [
+        { type:'like',       unread:true,  av:'av-teal',  initial:'M', actor:'Marisol Vega',   poem:'"Ashes at Dawn"', time:'2 minutes ago'  },
+        { type:'like',       unread:true,  av:'av-slate', initial:'L', actor:'Lena Hoang',     poem:'"Still Water"',   time:'15 minutes ago' },
+        { type:'follow',     unread:true,  av:'av-rose',  initial:'J', actor:'James Okafor',   poem:null,              time:'1 hour ago'     },
+        { type:'followback', unread:false, av:'av-peach', initial:'D', actor:'Diego Ferreira', poem:null,              time:'Yesterday'      },
+        { type:'like',       unread:false, av:'av-sage',  initial:'R', actor:'Riya Mehta',     poem:'"Tidal"',         time:'2 days ago'     },
+    ];
+
+    function notifMessage(n) {
+        if (n.type === 'like')       return `<strong>${n.actor}</strong> liked your poem <strong>${n.poem}</strong>`;
+        if (n.type === 'follow')     return `<strong>${n.actor}</strong> started following you`;
+        if (n.type === 'followback') return `<strong>${n.actor}</strong> followed you back`;
+        return '';
+    }
+
+    function renderNotifs() {
+        document.getElementById('notifList').innerHTML = NOTIFICATIONS.map(n => `
+            <div class="ph-notif-item ${n.unread ? 'unread' : ''}">
+                <div class="ph-notif-dot ${n.unread ? '' : 'read'}"></div>
+                <div class="ph-notif-avt ${n.av}">${n.initial}</div>
+                <div>
+                    <div class="ph-notif-text">${notifMessage(n)}</div>
+                    <div class="ph-notif-time">${n.time}</div>
+                </div>
+            </div>`).join('');
+    }
+    renderNotifs();
+
+
+
+    function updateBadge() {
+        const count = NOTIFICATIONS.filter(n => n.unread).length;
+        const badge = document.getElementById('notifBadge');
+        badge.textContent = count > 0 ? count : '';
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+    updateBadge();
+
+    function addNotif(notif) { NOTIFICATIONS.unshift(notif); renderNotifs(); updateBadge(); }
+    function toggleNotif()   { document.getElementById('notifOverlay').classList.toggle('open'); }
+    function closeNotif()    { document.getElementById('notifOverlay').classList.remove('open'); }
+    function clearNotifs()   { NOTIFICATIONS.forEach(n => n.unread = false); renderNotifs(); updateBadge(); }
+
+    // ── Profile dropdown ──────────────────────────────────────────────────
+    function toggleProfile() {
+        const d = document.getElementById('profileDrop');
+        const a = document.getElementById('profileAvatar');
+        const open = d.classList.toggle('open');
+        a.classList.toggle('active', open);
+    }
+    document.addEventListener('click', function(e) {
+        const d = document.getElementById('profileDrop');
+        const a = document.getElementById('profileAvatar');
+        if (!d.contains(e.target) && !a.contains(e.target)) {
+            d.classList.remove('open');
+            a.classList.remove('active');
+        }
+    });
+
+    // ── Tabs ──────────────────────────────────────────────────────────────
+    let currentTab = 'all';
+    let currentTag = null;
+    let followedAuthors = [];
+
+    function setTab(el, tab) {
+        currentTab = tab;
+
+        document.querySelectorAll('.ph-tab').forEach(t =>
+            t.classList.remove('active')
+        );
+        el.classList.add('active');
+
+        applyFilters();
+    }
+
+    // ── Tag filtering ─────────────────────────────────────────────────────
+    function filterByTag(el, tag) {
+        if (currentTag === tag) {
+            currentTag = null;
+            el.classList.remove('active');
+        } else {
+            currentTag = tag;
+            document.querySelectorAll('.ph-tag').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+        applyFilters();
+    }
+
+    // ── Combined filter (tab + tag + search) ──────────────────────────────
+    function applyFilters() {
+        const searchVal = (document.getElementById('poemSearch').value || '').toLowerCase();
+        const cards = document.querySelectorAll('.ph-poem-card');
+        const feed = document.getElementById('feedList');
+        const noResults = document.getElementById('noResults');
+
+        let visible = 0;
+
+        cards.forEach(card => {
+            const cardAuthor = (card.dataset.author || '').trim().toLowerCase();
+            const cardTitle = card.dataset.title || '';
+
+            let tabMatch = true;
+
+            // For You = all
+            if (currentTab === 'all') {
+                tabMatch = true;
+            }
+
+            // Following = only followed authors
+            else if (currentTab === 'following') {
+                tabMatch = followedAuthors.includes(cardAuthor);
+            }
+
+            // New = show nothing
+            else if (currentTab === 'new') {
+                tabMatch = false;
+            }
+
+            const searchMatch =
+                searchVal === '' ||
+                cardTitle.includes(searchVal) ||
+                cardAuthor.includes(searchVal);
+
+            const show = tabMatch && searchMatch;
+
+            card.style.display = show ? '' : 'none';
+
+            if (show) visible++;
+        });
+
+        if (visible === 0) {
+            feed.style.display = 'none';
+            noResults.style.display = 'flex';
+
+            if (currentTab === 'new') {
+                noResults.innerHTML = `
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v4"/>
+                        <path d="M12 16h.01"/>
+                    </svg>
+                    No new poems yet ✨
+                `;
+            }
+            else if (currentTab === 'following') {
+                noResults.innerHTML = `
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 12h8"/>
+                    </svg>
+                    Follow poets to see their poems 💛
+                `;
+            }
+            else {
+                noResults.innerHTML = `
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    No poems or poets found matching your search.
+                `;
+            }
+        } else {
+            feed.style.display = 'flex';
+            noResults.style.display = 'none';
+        }
+    }
+
+    // ── Save / Bookmark ───────────────────────────────────────────────────
+    function toggleSave(btn) {
+        const svg  = btn.querySelector('svg');
+        const isSaved = btn.classList.toggle('saved');
+        svg.setAttribute('fill', isSaved ? 'currentColor' : 'none');
+        btn.innerHTML = btn.innerHTML.replace(isSaved ? 'Save' : 'Saved', isSaved ? 'Saved' : 'Save');
+    }
+
+    // ── Modals ────────────────────────────────────────────────────────────
+    function openUpload()  { document.getElementById('uploadModal').classList.add('open'); }
+    function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); }
+
+    function openReadModal(title, text, author, anthologyTitle) {
+        document.getElementById('readModalTitle').textContent  = title;
+        document.getElementById('readModalAuthor').textContent = author;
+        document.getElementById('readModalText').textContent   = text;
+        document.getElementById('readModalAnthologyTitle').textContent   = anthologyTitle;
+        document.getElementById('readModal').classList.add('open');
+    }
+    function closeReadModal() { document.getElementById('readModal').classList.remove('open'); }
+
+    function closeModalOutside(e, id, fn) { if (e.target.id === id) fn(); }
+
+    // ── Like (server) ─────────────────────────────────────────────────────
+    async function toggleLikeServer(btn, poemId) {
+        const token   = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const path    = btn.querySelector('path');
+        const countEl = btn.querySelector('.like-count');
+        const response = await fetch(`/Menu/ToggleLike?poemId=${poemId}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': token }
+        });
+        if (response.ok) {
+            const result = await response.json();
+            countEl.textContent = result.newCount;
+            btn.classList.toggle('liked', result.liked);
+            path.setAttribute('fill',   result.liked ? '#c0392b' : 'none');
+            path.setAttribute('stroke', result.liked ? '#c0392b' : 'currentColor');
+        }
+        }function toggleFollow(btn, authorName) {
+        const author = authorName.trim().toLowerCase();
+
+        const alreadyFollowing = followedAuthors.includes(author);
+        const isFollowing = !alreadyFollowing;
+
+        if (isFollowing) {
+            followedAuthors.push(author);
+        } else {
+            followedAuthors = followedAuthors.filter(a => a !== author);
+        }
+
+        // sync ALL buttons
+        document.querySelectorAll('.ph-author-follow, .ph-follow-btn').forEach(followBtn => {
+            const btnAuthor = followBtn.getAttribute('data-author');
+
+            if (btnAuthor && btnAuthor.trim().toLowerCase() === author) {
+                followBtn.classList.toggle('following', isFollowing);
+                followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+            }
+        });
+
+        applyFilters();
+    }
+</script>
 
 <style>
     :root {
@@ -873,8 +1134,8 @@
         gap: 1rem;
         margin-top: 1.25rem;
     }
-    
 
+    
 
     /* keep no-results inside left column */
     .no-results {
@@ -1544,8 +1805,6 @@
         .ph-search {
             max-width: 180px;
         }
-
-       
     }
 
     @@media (max-width: 480px) {
@@ -1558,12 +1817,12 @@
         }
     }
 
-  .ph-main {
-    width: 100%;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-}
+    .ph-main {
+        width: 100%;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
 
     .ph-author-follow {
         margin-left: 0.5rem; /* NOT auto */
@@ -1591,258 +1850,3 @@
         }
 
 </style>
-
-<script>
-    // Toast auto-dismiss
-    const toast = document.getElementById('toastBanner');
-    if (toast) setTimeout(() => toast.remove(), 4000);
-
-    @if (TempData["PublishError"] != null)
-    {
-            <text>openUpload();</text>
-    }
-
-    // ── Verse of the Day ──────────────────────────────────────────────────
-    const QUOTES = [
-        { text: '"Two roads diverged in a wood, and I — I took the one less traveled by."', attr: '— Robert Frost' },
-        { text: '"Hold fast to dreams, for if dreams die, life is a broken-winged bird."', attr: '— Langston Hughes' },
-        { text: '"Still I rise, like dust, I\'ll rise."', attr: '— Maya Angelou' },
-        { text: '"Once upon a midnight dreary, while I pondered, weak and weary…"', attr: '— Edgar Allan Poe' },
-        { text: '"The woods are lovely, dark and deep, but I have promises to keep."', attr: '— Robert Frost' },
-    ];
-    const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-    document.getElementById('qotdText').textContent = q.text;
-    document.getElementById('qotdAttr').textContent = q.attr;
-
-    // ── Notifications ─────────────────────────────────────────────────────
-    const NOTIFICATIONS = [
-        { type:'like',       unread:true,  av:'av-teal',  initial:'M', actor:'Marisol Vega',   poem:'"Ashes at Dawn"', time:'2 minutes ago'  },
-        { type:'like',       unread:true,  av:'av-slate', initial:'L', actor:'Lena Hoang',     poem:'"Still Water"',   time:'15 minutes ago' },
-        { type:'follow',     unread:true,  av:'av-rose',  initial:'J', actor:'James Okafor',   poem:null,              time:'1 hour ago'     },
-        { type:'followback', unread:false, av:'av-peach', initial:'D', actor:'Diego Ferreira', poem:null,              time:'Yesterday'      },
-        { type:'like',       unread:false, av:'av-sage',  initial:'R', actor:'Riya Mehta',     poem:'"Tidal"',         time:'2 days ago'     },
-    ];
-
-    function notifMessage(n) {
-        if (n.type === 'like')       return `<strong>${n.actor}</strong> liked your poem <strong>${n.poem}</strong>`;
-        if (n.type === 'follow')     return `<strong>${n.actor}</strong> started following you`;
-        if (n.type === 'followback') return `<strong>${n.actor}</strong> followed you back`;
-        return '';
-    }
-
-    function renderNotifs() {
-        document.getElementById('notifList').innerHTML = NOTIFICATIONS.map(n => `
-            <div class="ph-notif-item ${n.unread ? 'unread' : ''}">
-                <div class="ph-notif-dot ${n.unread ? '' : 'read'}"></div>
-                <div class="ph-notif-avt ${n.av}">${n.initial}</div>
-                <div>
-                    <div class="ph-notif-text">${notifMessage(n)}</div>
-                    <div class="ph-notif-time">${n.time}</div>
-                </div>
-            </div>`).join('');
-    }
-    renderNotifs();
-
-
-
-    function updateBadge() {
-        const count = NOTIFICATIONS.filter(n => n.unread).length;
-        const badge = document.getElementById('notifBadge');
-        badge.textContent = count > 0 ? count : '';
-        badge.style.display = count > 0 ? 'inline-flex' : 'none';
-    }
-    updateBadge();
-
-    function addNotif(notif) { NOTIFICATIONS.unshift(notif); renderNotifs(); updateBadge(); }
-    function toggleNotif()   { document.getElementById('notifOverlay').classList.toggle('open'); }
-    function closeNotif()    { document.getElementById('notifOverlay').classList.remove('open'); }
-    function clearNotifs()   { NOTIFICATIONS.forEach(n => n.unread = false); renderNotifs(); updateBadge(); }
-
-    // ── Profile dropdown ──────────────────────────────────────────────────
-    function toggleProfile() {
-        const d = document.getElementById('profileDrop');
-        const a = document.getElementById('profileAvatar');
-        const open = d.classList.toggle('open');
-        a.classList.toggle('active', open);
-    }
-    document.addEventListener('click', function(e) {
-        const d = document.getElementById('profileDrop');
-        const a = document.getElementById('profileAvatar');
-        if (!d.contains(e.target) && !a.contains(e.target)) {
-            d.classList.remove('open');
-            a.classList.remove('active');
-        }
-    });
-
-    // ── Tabs ──────────────────────────────────────────────────────────────
-    let currentTab = 'all';
-    let currentTag = null;
-    let followedAuthors = [];
-
-    function setTab(el, tab) {
-        currentTab = tab;
-
-        document.querySelectorAll('.ph-tab').forEach(t =>
-            t.classList.remove('active')
-        );
-        el.classList.add('active');
-
-        applyFilters();
-    }
-
-    // ── Tag filtering ─────────────────────────────────────────────────────
-    function filterByTag(el, tag) {
-        if (currentTag === tag) {
-            currentTag = null;
-            el.classList.remove('active');
-        } else {
-            currentTag = tag;
-            document.querySelectorAll('.ph-tag').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-        }
-        applyFilters();
-    }
-
-    // ── Combined filter (tab + tag + search) ──────────────────────────────
-    function applyFilters() {
-        const searchVal = (document.getElementById('poemSearch').value || '').toLowerCase();
-        const cards = document.querySelectorAll('.ph-poem-card');
-        const feed = document.getElementById('feedList');
-        const noResults = document.getElementById('noResults');
-
-        let visible = 0;
-
-        cards.forEach(card => {
-            const cardAuthor = (card.dataset.author || '').trim().toLowerCase();
-            const cardTitle = card.dataset.title || '';
-
-            let tabMatch = true;
-
-            // For You = all
-            if (currentTab === 'all') {
-                tabMatch = true;
-            }
-
-            // Following = only followed authors
-            else if (currentTab === 'following') {
-                tabMatch = followedAuthors.includes(cardAuthor);
-            }
-
-            // New = show nothing
-            else if (currentTab === 'new') {
-                tabMatch = false;
-            }
-
-            const searchMatch =
-                searchVal === '' ||
-                cardTitle.includes(searchVal) ||
-                cardAuthor.includes(searchVal);
-
-            const show = tabMatch && searchMatch;
-
-            card.style.display = show ? '' : 'none';
-
-            if (show) visible++;
-        });
-
-        if (visible === 0) {
-            feed.style.display = 'none';
-            noResults.style.display = 'flex';
-
-            if (currentTab === 'new') {
-                noResults.innerHTML = `
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 8v4"/>
-                        <path d="M12 16h.01"/>
-                    </svg>
-                    No new poems yet ✨
-                `;
-            }
-            else if (currentTab === 'following') {
-                noResults.innerHTML = `
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M8 12h8"/>
-                    </svg>
-                    Follow poets to see their poems 💛
-                `;
-            }
-            else {
-                noResults.innerHTML = `
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="11" cy="11" r="8"/>
-                        <path d="M21 21l-4.35-4.35"/>
-                    </svg>
-                    No poems or poets found matching your search.
-                `;
-            }
-        } else {
-            feed.style.display = 'flex';
-            noResults.style.display = 'none';
-        }
-    }
-
-    // ── Save / Bookmark ───────────────────────────────────────────────────
-    function toggleSave(btn) {
-        const svg  = btn.querySelector('svg');
-        const isSaved = btn.classList.toggle('saved');
-        svg.setAttribute('fill', isSaved ? 'currentColor' : 'none');
-        btn.innerHTML = btn.innerHTML.replace(isSaved ? 'Save' : 'Saved', isSaved ? 'Saved' : 'Save');
-    }
-
-    // ── Modals ────────────────────────────────────────────────────────────
-    function openUpload()  { document.getElementById('uploadModal').classList.add('open'); }
-    function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); }
-
-    function openReadModal(title, text, author) {
-        document.getElementById('readModalTitle').textContent  = title;
-        document.getElementById('readModalAuthor').textContent = author;
-        document.getElementById('readModalText').textContent   = text;
-        document.getElementById('readModal').classList.add('open');
-    }
-    function closeReadModal() { document.getElementById('readModal').classList.remove('open'); }
-
-    function closeModalOutside(e, id, fn) { if (e.target.id === id) fn(); }
-
-    // ── Like (server) ─────────────────────────────────────────────────────
-    async function toggleLikeServer(btn, poemId) {
-        const token   = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        const path    = btn.querySelector('path');
-        const countEl = btn.querySelector('.like-count');
-        const response = await fetch(`/Menu/ToggleLike?poemId=${poemId}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token }
-        });
-        if (response.ok) {
-            const result = await response.json();
-            countEl.textContent = result.newCount;
-            btn.classList.toggle('liked', result.liked);
-            path.setAttribute('fill',   result.liked ? '#c0392b' : 'none');
-            path.setAttribute('stroke', result.liked ? '#c0392b' : 'currentColor');
-        }
-        }function toggleFollow(btn, authorName) {
-        const author = authorName.trim().toLowerCase();
-
-        const alreadyFollowing = followedAuthors.includes(author);
-        const isFollowing = !alreadyFollowing;
-
-        if (isFollowing) {
-            followedAuthors.push(author);
-        } else {
-            followedAuthors = followedAuthors.filter(a => a !== author);
-        }
-
-        // sync ALL buttons
-        document.querySelectorAll('.ph-author-follow, .ph-follow-btn').forEach(followBtn => {
-            const btnAuthor = followBtn.getAttribute('data-author');
-
-            if (btnAuthor && btnAuthor.trim().toLowerCase() === author) {
-                followBtn.classList.toggle('following', isFollowing);
-                followBtn.textContent = isFollowing ? 'Following' : 'Follow';
-            }
-        });
-
-        applyFilters();
-    }
-</script>
