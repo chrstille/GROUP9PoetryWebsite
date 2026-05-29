@@ -1,10 +1,11 @@
-@model IEnumerable<GROUP9PoetryWebsite.Models.Poem>
+@model GROUP9PoetryWebsite.ViewModels.PoemViewModel
 @{
     ViewData["Title"] = "Menu";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/menuindex.css" asp-append-version="true" />
+
 }
 
 <!-- NAV -->
@@ -123,7 +124,7 @@
             </div>
 
             <div class="ph-feed" id="feedList">
-                @foreach (var p in Model)
+                @foreach (var p in Model.Poems)
                 {
                     <article class="ph-poem-card"
                              data-title="@p.Title.ToLower()"
@@ -313,20 +314,49 @@
 
 <!-- UPLOAD MODAL -->
 <div class="ph-modal-wrap" id="uploadModal" onclick="closeModalOutside(event,'uploadModal',closeUpload)">
-    <form asp-controller="Menu" asp-action="Create" method="post" class="ph-modal">
+    <form id="uploadModal" asp-controller="Menu" asp-action="Create" method="post" class="ph-modal">
         @Html.AntiForgeryToken()
         <div class="ph-modal-head">
             <h3>Share a <em>Verse</em></h3>
             <button type="button" class="ph-modal-close" onclick="closeUpload()">✕</button>
         </div>
+
         <div class="ph-form-group">
             <label>Title</label>
-            <input type="text" name="Title" placeholder="Give your poem a title…" required />
+            <input type="text" name="Poem.Title" placeholder="Give your poem a title…" required />
         </div>
+
         <div class="ph-form-group">
             <label>Your Verse</label>
-            <textarea name="Text" placeholder="Write your poem here…" required></textarea>
+            <textarea name="Poem.Text" placeholder="Write your poem here…" required></textarea>
         </div>
+
+        <!-- Anthology Logic -->
+        <div class="ph-form-group">
+            <label>Anthology</label>
+    
+            <!-- Switch Button -->
+            <button type="button" id="anthologyToggleBtn" class="create-anthology-btn" onclick="toggleAnthologyMode()">
+                <i class="fa-solid fa-arrows-rotate"></i>  Create New Anthology
+            </button>
+
+            <!-- Dropdown Container -->
+            <div id="anthologySelectContainer">
+                <select asp-for="Poem.AnthologyId" asp-items="Model.AnthologyOptions" class="ph-input">
+                </select>
+            </div>
+
+            <!-- Input Container (Hidden by default) -->
+            <div id="newAnthologyContainer" style="display:none;">
+                <input type="text" name="newAnthologyTitle" id="newAnthologyInput" placeholder="Enter new anthology title..." />
+            </div>
+
+            <!-- Anthology Description Area -->
+            <div id="anthologyDescription" class="ph-anthology-desc" style="margin-top: 8px; font-size: 0.85rem; color: var(--ph-secondary);">
+                Select an existing anthology or create a new one.
+            </div>
+        </div>
+
         <div class="ph-modal-foot">
             <button type="button" class="ph-btn-cancel" onclick="closeUpload()">Cancel</button>
             <button type="submit" class="ph-btn-publish">Publish</button>
@@ -604,6 +634,34 @@
         });
 
         applyFilters();
+    }
+
+    // ── Anthology Selection/Creation (Upload Modal) ─────────────────────────────────────────────────────
+    let isCreatingNew = false;
+
+    function toggleAnthologyMode() {
+        const selectContainer = document.getElementById('anthologySelectContainer');
+        const inputContainer = document.getElementById('newAnthologyContainer');
+        const toggleBtn = document.getElementById('anthologyToggleBtn');
+        const desc = document.getElementById('anthologyDescription');
+        const inputField = document.getElementById('newAnthologyInput');
+        const selectField = document.querySelector('select[name="Poem.AnthologyId"]');
+
+        isCreatingNew = !isCreatingNew;
+
+        if (isCreatingNew) {
+            selectContainer.style.display = 'none';
+            inputContainer.style.display = 'block';
+            toggleBtn.textContent = 'Select Existing Anthology';
+            desc.textContent = "Your new anthology will be created with this title.";
+            selectField.value = "1"; // Reset dropdown to default
+        } else {
+            selectContainer.style.display = 'block';
+            inputContainer.style.display = 'none';
+            toggleBtn.textContent = 'Create New Anthology';
+            desc.textContent = "Select an existing anthology or create a new one.";
+            inputField.value = ""; // Clear input field
+        }
     }
 </script>
 
@@ -1849,4 +1907,78 @@
             color: var(--ph-accent);
         }
 
+    select:focus {
+        outline: none;
+        border: 1px solid #d4a373; 
+        box-shadow: 0 0 0 2px rgba(212, 163, 115, 0.2); 
+    }
+
+    select.ph-input {
+        width: 100%;
+        padding: 0.65rem 0.85rem; 
+        background-color: var(--ph-surface); 
+        border: 1px solid var(--ph-border);
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: var(--ph-ink);
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%2F%2Fwww.w3.org%2F2000%2Fsvg%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237a6a5a%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.85rem top 50%;
+        background-size: 0.65rem auto;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        select.ph-input:focus {
+            border-color: var(--ph-accent);
+            box-shadow: 0 0 0 3px rgba(200,149,90,0.1);
+        }
+
+    /* Button look for the toggle */
+    .ph-switch-btn {
+        background: var(--ph-surface);
+        border: 1px solid var(--ph-border);
+        color: var(--ph-muted);
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        margin-bottom: 0.8rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        display: inline-block;
+    }
+
+        .ph-switch-btn:hover {
+            border-color: var(--ph-accent);
+            color: var(--ph-accent);
+            background: #fff;
+        }
+    
+    #anthologyToggleBtn.create-anthology-btn {
+        all: unset; 
+        display: inline-flex; 
+        align-items: center;
+        justify-content: center;
+        
+        background-color: #ffffff;
+        border: 1px solid var(--ph-border); 
+        color: var(--ph-ink); 
+    
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-bottom: 12px; 
+        transition: all 0.2s ease;
+    }
+
+        
+        #anthologyToggleBtn.create-anthology-btn:hover {
+            background-color: #f9f9f9;
+            border-color: var(--ph-accent);
+            color: var(--ph-accent);
+        }
 </style>
