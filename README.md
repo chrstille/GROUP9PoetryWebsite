@@ -28,7 +28,7 @@ Users can like poems that they are in favor of by pressing the heart icon at the
 If the user wants to write a poem, they can press on the button found at the bottom-right corner of their screen. 
 They are given the freedom to think of a title for their poem, the creative verse/poem that they want to share, and lastly the option to select existing anthologies or create a new anthology.
 
--- SORT BY ANTHOLOGY (SIDEBAR)
+-- SORT BY ANTHOLOGY (SIDEBAR) --
 If the user wants to view poems that belong to a specific anthology, they can sort their main feed by selecting anthologies from the sidebar (which can be found in the right side of their screen).
 There's also an option to view poems that aren't classified under an anthology
 
