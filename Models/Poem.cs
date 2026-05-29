@@ -14,6 +14,10 @@ public class Poem
     public string Author { get; set; } = "";
 
     public int LikesCount { get; set; }
+    public int AnthologyId { get; set; }
 
     public List<PoemLike> Likes { get; set; } = new();
+
+    public Anthology Anthology { get; set; }
+
 }
