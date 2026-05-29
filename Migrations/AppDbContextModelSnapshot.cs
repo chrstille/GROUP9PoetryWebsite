@@ -21,6 +21,27 @@ namespace GROUP9PoetryWebsite.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("GROUP9PoetryWebsite.Models.Anthology", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Anthologies");
+                });
+
             modelBuilder.Entity("GROUP9PoetryWebsite.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -53,6 +74,9 @@ namespace GROUP9PoetryWebsite.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AnthologyId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -69,6 +93,8 @@ namespace GROUP9PoetryWebsite.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AnthologyId");
 
                     b.ToTable("Poems");
                 });
@@ -121,6 +147,17 @@ namespace GROUP9PoetryWebsite.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("GROUP9PoetryWebsite.Models.Poem", b =>
+                {
+                    b.HasOne("GROUP9PoetryWebsite.Models.Anthology", "Anthology")
+                        .WithMany("Poems")
+                        .HasForeignKey("AnthologyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Anthology");
+                });
+
             modelBuilder.Entity("GROUP9PoetryWebsite.Models.PoemLike", b =>
                 {
                     b.HasOne("GROUP9PoetryWebsite.Models.Poem", "Poem")
@@ -130,6 +167,11 @@ namespace GROUP9PoetryWebsite.Migrations
                         .IsRequired();
 
                     b.Navigation("Poem");
+                });
+
+            modelBuilder.Entity("GROUP9PoetryWebsite.Models.Anthology", b =>
+                {
+                    b.Navigation("Poems");
                 });
 
             modelBuilder.Entity("GROUP9PoetryWebsite.Models.Poem", b =>

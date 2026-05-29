@@ -11,6 +11,20 @@ namespace GROUP9PoetryWebsite.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Anthologies",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Anthologies", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Notifications",
                 columns: table => new
                 {
@@ -26,22 +40,6 @@ namespace GROUP9PoetryWebsite.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Poems",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Author = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LikesCount = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Poems", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -54,6 +52,29 @@ namespace GROUP9PoetryWebsite.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Poems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Author = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LikesCount = table.Column<int>(type: "int", nullable: false),
+                    AnthologyId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Poems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Poems_Anthologies_AnthologyId",
+                        column: x => x.AnthologyId,
+                        principalTable: "Anthologies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -80,6 +101,11 @@ namespace GROUP9PoetryWebsite.Migrations
                 name: "IX_Likes_PoemId",
                 table: "Likes",
                 column: "PoemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Poems_AnthologyId",
+                table: "Poems",
+                column: "AnthologyId");
         }
 
         /// <inheritdoc />
@@ -96,6 +122,9 @@ namespace GROUP9PoetryWebsite.Migrations
 
             migrationBuilder.DropTable(
                 name: "Poems");
+
+            migrationBuilder.DropTable(
+                name: "Anthologies");
         }
     }
 }
