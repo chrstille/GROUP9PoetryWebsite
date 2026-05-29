@@ -116,30 +116,36 @@
                             <div class="author-name">@(p.Author ?? "Anonymous")</div>
                         </div>
     
+
                         <div class="poem-id">
                             #@p.Id
                         </div>
                     </div>
                     <h3 class="poem-title">@p.Title</h3>
                     <div class="poem-excerpt">@p.Text</div>
-                    <div class="card-foot">
-                        @{
-                            // Check if the current user liked this specific poem
-                            bool isLiked = ((HashSet<int>)ViewBag.LikedPoemIds).Contains(p.Id);
-                        }
-                        <button class="foot-btn @(isLiked ? "liked" : "")" onclick="toggleLikeServer(this, '@p.Id')">
-                            <svg viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" 
-                                      stroke="@(isLiked ? "#c0392b" : "currentColor")" 
-                                      fill="@(isLiked ? "#c0392b" : "none")" />
-                            </svg>
-                            <span class="like-count">@p.LikesCount</span>
-                        </button>
-                        <a href="javascript:void(0)" 
-                           class="read-more" 
-                           onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author')">
-                            Read full ↗
-                        </a>
+                    <div class="card-foot" style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            @{
+                                // Check if the current user liked this specific poem
+                                bool isLiked = ((HashSet<int>)ViewBag.LikedPoemIds).Contains(p.Id);
+                            }
+                            <button class="foot-btn @(isLiked ? "liked" : "")" onclick="toggleLikeServer(this, '@p.Id')">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" 
+                                          stroke="@(isLiked ? "#c0392b" : "currentColor")" 
+                                          fill="@(isLiked ? "#c0392b" : "none")" />
+                                </svg>
+                                <span class="like-count">@p.LikesCount</span>
+                            </button>
+                            <a href="javascript:void(0)" 
+                               class="read-more" 
+                               onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author', '@p.Anthology.Title')">
+                                Read full ↗
+                            </a>
+                        </div>
+                        <div class="btn-cancel" style="margin-left: auto;">
+                            @p.Anthology.Title
+                        </div>
                     </div>
                 </article>
             }
@@ -274,7 +280,7 @@
 <div class="modal-overlay" id="readModal" onclick="closeReadModalOutside(event)">
     <div class="modal read-modal">
         <div class="modal-head">
-            <h3>Poem</h3>
+            <h3>Anthology: <span id="readModalAnthologyTitle"></span></h3>
             <button type="button" class="modal-close" onclick="closeReadModal()">✕</button>
         </div>
         <div class="modal-body">
@@ -282,9 +288,11 @@
             <p class="read-author">by <span id="readModalAuthor">Author Name</span></p>
             <div id="readModalText" class="read-text"></div>
         </div>
+        @* commented because readModalAnthologyTitle is already displayed at the top
         <div class="modal-foot">
-            <button class="btn-cancel" onclick="closeReadModal()">Close</button>
+            <div class="btn-cancel" id="readModalAnthologyTitle"></div>
         </div>
+        *@
     </div>
 </div>
 
@@ -618,10 +626,11 @@
     function closeModalOutside(e) { if (e.target.id === 'uploadModal') closeUpload(); }
 
     // ─── READ FULL POEM MODAL ──────────────────────────────────────────────────
-    function openReadModal(title, text, author) {
+    function openReadModal(title, text, author, anthologyTitle) {
         document.getElementById('readModalAuthor').textContent = author;
         document.getElementById('readModalTitle').textContent = title;
         document.getElementById('readModalText').textContent = text;
+        document.getElementById('readModalAnthologyTitle').textContent = anthologyTitle;
         document.getElementById('readModal').classList.add('open');
     }
 
