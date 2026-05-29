@@ -32,7 +32,9 @@ namespace GROUP9PoetryWebsite.Controllers
             var username = User.Identity?.Name;
 
             // Get all poems
-            var poems = _context.Poems.OrderByDescending(p => p.Id).ToList();
+            var poems = _context.Poems
+                .Include(p => p.Anthology)
+                .OrderByDescending(p => p.Id).ToList();
 
             // Store IDs of poems liked by the current user
             ViewBag.LikedPoemIds = new HashSet<int>();
@@ -95,8 +97,11 @@ namespace GROUP9PoetryWebsite.Controllers
                 return BadRequest("Title or Text is empty!");
             }
 
+
             poem.Author = User.Identity?.Name ?? "Anonymous";
-            
+
+            // 1 is default for no anthology picked
+            poem.Anthology = _context.Anthologies.FirstOrDefault(a => a.Id == 1);
             _context.Poems.Add(poem);
             _context.SaveChanges();
             
