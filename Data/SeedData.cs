@@ -8,7 +8,18 @@ namespace GROUP9PoetryWebsite.Data
     {
         public static void Initialize(AppDbContext context)
         {
-            if (context.Anthologies.Any()) return; // Check if already seeded
+            if (context.Users.Any()) return;  // Check if already seeded
+
+            context.Users.AddRange(
+                new User
+                {
+                    Username = "Poet",
+                    Email = "ordinaryPoet@gmail.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("ilovepoems")
+                });
+            context.SaveChanges();
+
+            if (context.Anthologies.Any()) return;
 
             var none = new Anthology { Title = "No Anthology", Description = "No Description" };
             var resilience = new Anthology { Title = "Echoes of Resilience", Description = "Overcoming pain, rising above struggle, and the strength of the human spirit." };
