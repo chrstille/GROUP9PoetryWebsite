@@ -5,7 +5,7 @@
 namespace GROUP9PoetryWebsite.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial1 : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -1,376 +1,1457 @@
 @model IEnumerable<GROUP9PoetryWebsite.Models.Poem>
-@{ ViewData["Title"] = "Menu"; }
+@{
+    ViewData["Title"] = "Menu";
+}
 
 @section Styles {
     <link rel="stylesheet" href="~/css/menuindex.css" asp-append-version="true" />
 }
 
-<!-- ═══════════════ NAV ═══════════════ -->
-<nav>
-    <a class="nav-logo" href="#">Poetry <em>Haven</em></a>
-        @* this line is used for debugging if poems from the database are successfully retrieved*@
-        @* <p>DEBUG: @ViewBag.PoemCount poems loaded</p> *@
-    <div class="nav-divider"></div>
-    <div class="nav-search">
+<!-- NAV -->
+<nav class="ph-nav">
+    <a class="ph-logo" href="#">Poetry <em>Haven</em></a>
+    <div class="ph-nav-divider"></div>
+    <div class="ph-search">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
         </svg>
-        <input type="text" id="poemSearch" onkeyup="filterPoems()" placeholder="Search poems, poets…"/>
+        <input type="text" id="poemSearch" oninput="filterPoems()" placeholder="Search poems, poets…" />
     </div>
-    <div class="nav-spacer"></div>
-
-    <!-- Notification Bell -->
-    <button class="nav-btn" onclick="toggleNotif()" aria-label="Notifications" style="position:relative;">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    <div class="ph-spacer"></div>
+    <button class="ph-nav-action" onclick="toggleNotif()" aria-label="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
-        <span class="badge" id="notifBadge">3</span>
+        <span class="ph-badge" id="notifBadge">3</span>
     </button>
-
-    <!-- Profile Avatar -->
-    <div class="nav-avatar" title="My Profile" onclick="toggleProfile()" style="cursor:pointer;">
-        @(User.Identity.IsAuthenticated ? User.Identity.Name.Substring(0,1).ToUpper() : "G")
+    <div class="ph-avatar" id="profileAvatar" onclick="toggleProfile()" title="My Profile">
+        @(User.Identity.IsAuthenticated? User.Identity.Name.Substring(0, 1).ToUpper() : "G")
     </div>
 </nav>
 
-<!-- ═══════════════ PROFILE DROPDOWN ═══════════════ -->
-<div id="profileDropdown" class="profile-dropdown" style="display:none;">
-    @if (User.Identity.IsAuthenticated) {
-        <div class="profile-header">
-            <div class="profile-avatar-lg">@User.Identity.Name.Substring(0,1).ToUpper()</div>
-            <div class="profile-details">
-                <p class="profile-username">@User.Identity.Name</p>
-                @* Pull email from claims if available *@
-                <p class="profile-email">@(User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "No email on file")</p>
+<!-- PROFILE DROPDOWN -->
+<div id="profileDrop" class="ph-profile-drop">
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="ph-profile-head">
+            <div class="ph-profile-avatar-lg">@User.Identity.Name.Substring(0, 1).ToUpper()</div>
+            <div>
+                <p class="ph-profile-name">@User.Identity.Name</p>
+                <p class="ph-profile-email">@(User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "No email on file")</p>
             </div>
         </div>
-        <div class="profile-divider"></div>
-        <a asp-controller="Account" asp-action="ChangePassword" class="profile-link">
+        <div class="ph-drop-divider"></div>
+        <a asp-controller="Account" asp-action="ChangePassword" class="ph-drop-link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
             Change Password
         </a>
-        <div class="profile-divider"></div>
+        <div class="ph-drop-divider"></div>
         <form asp-controller="Menu" asp-action="Logout" method="post">
             @Html.AntiForgeryToken()
-            <button type="submit" class="profile-logout">
+            <button type="submit" class="ph-drop-logout">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
                 Log Out
             </button>
         </form>
-    } else {
-        <p class="profile-guest">You are browsing as a guest.</p>
-        <a asp-controller="Account" asp-action="Login" class="profile-link">Log In</a>
+    }
+    else
+    {
+        <p class="ph-profile-guest">You are browsing as a guest.</p>
+        <a asp-controller="Account" asp-action="Login" class="ph-drop-link">Log In</a>
     }
 </div>
 
-<!-- ═══════════════ TOAST BANNER ═══════════════ -->
-@if (TempData["PublishSuccess"] != null) {
-    <div class="toast toast-success" id="toastBanner">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M20 6L9 17l-5-5"/>
-        </svg>
+<!-- TOAST -->
+@if (TempData["PublishSuccess"] != null)
+{
+    <div class="ph-toast ph-toast-success" id="toastBanner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5" /></svg>
         @TempData["PublishSuccess"]
     </div>
 }
-@if (TempData["PublishError"] != null) {
-    <div class="toast toast-error" id="toastBanner">
+@if (TempData["PublishError"] != null)
+{
+    <div class="ph-toast ph-toast-error" id="toastBanner">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
         @TempData["PublishError"]
     </div>
 }
 
-<!-- ═══════════════ MAIN LAYOUT ═══════════════ -->
-<div class="layout">
-
-    <!-- FEED -->
-    <main>
-        <div class="feed-header">
-            <h2>The <em>Feed</em></h2>
-            <div class="feed-tabs">
-                <button class="tab active" onclick="setTab(this,'all')">For You</button>
-                <button class="tab" onclick="setTab(this,'following')">Following</button>
-                <button class="tab" onclick="setTab(this,'new')">New</button>
+<!-- MAIN PAGE -->
+<div class="ph-page">
+    <!-- ALWAYS 2-COLUMN GRID — sidebar never moves -->
+    <div class="ph-grid">
+        <main class="ph-main">
+            <!-- Feed title + tabs inside main so sidebar column is never affected -->
+            <div class="ph-feed-header">
+                <h2 class="ph-feed-title">The <em>Feed</em></h2>
+                <div class="ph-tabs" id="mainTabs">
+                    <button class="ph-tab active" onclick="setTab(this,'all')">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        For You
+                    </button>
+                    <button class="ph-tab" onclick="setTab(this,'following')">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                        Following
+                    </button>
+                    <button class="ph-tab" onclick="setTab(this,'new')">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                        New
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <div class="main-layout-container">
-            
-        <div id="feedList">
-            @foreach (var p in Model) {
-                <article class="poem-card">
-                    <div class="poem-card-header">
-                        <div class="poem-author-info">
-                            <div class="author-avatar">
-                                @(string.IsNullOrEmpty(p.Author) ? "U" : p.Author.Substring(0,1).ToUpper())
+            <div class="ph-feed" id="feedList">
+                @foreach (var p in Model)
+                {
+                    <article class="ph-poem-card"
+                             data-title="@p.Title.ToLower()"
+                             data-author="@(p.Author?.ToLower() ?? "")"
+                             data-tags=""
+                             data-tab="all">
+
+                        <span class="ph-card-badge">#@p.Id</span>
+
+                        <div class="ph-author-row">
+                            <div class="ph-author-avt">
+                                @(string.IsNullOrEmpty(p.Author) ? "U" : p.Author.Substring(0, 1).ToUpper())
                             </div>
-                            <div class="author-name">@(p.Author ?? "Anonymous")</div>
-                        </div>
-    
 
-                        <div class="poem-id">
-                            #@p.Id
+                            <div class="ph-author-name">@(p.Author ?? "Anonymous")</div>
+
+                            <button class="ph-author-follow"
+                                    data-author="@(p.Author ?? "Anonymous")"
+                                    onclick="toggleFollow(this, '@(p.Author ?? "Anonymous")')">
+                                Follow
+                            </button>
                         </div>
-                    </div>
-                    <h3 class="poem-title">@p.Title</h3>
-                    <div class="poem-excerpt">@p.Text</div>
-                    <div class="card-foot" style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
+
+                        <h3 class="ph-poem-title">@p.Title</h3>
+                        <div class="ph-poem-excerpt">@p.Text</div>
+
+                        <div class="ph-card-foot">
                             @{
-                                // Check if the current user liked this specific poem
                                 bool isLiked = ((HashSet<int>)ViewBag.LikedPoemIds).Contains(p.Id);
                             }
-                            <button class="foot-btn @(isLiked ? "liked" : "")" onclick="toggleLikeServer(this, '@p.Id')">
-                                <svg viewBox="0 0 24 24" width="16" height="16">
-                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" 
-                                          stroke="@(isLiked ? "#c0392b" : "currentColor")" 
-                                          fill="@(isLiked ? "#c0392b" : "none")" />
+                            <button class="ph-like-btn @(isLiked ? "liked" : "")"
+                                    onclick="toggleLikeServer(this, '@p.Id')">
+                                <svg viewBox="0 0 24 24" width="13" height="13">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                          stroke="@(isLiked ? "#c0392b" : "currentColor")"
+                                          fill="@(isLiked ? "#c0392b" : "none")"
+                                          stroke-width="1.8" />
                                 </svg>
                                 <span class="like-count">@p.LikesCount</span>
                             </button>
-                            <a href="javascript:void(0)" 
-                               class="read-more" 
-                               onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author', '@p.Anthology.Title')">
+
+                            <button class="ph-bookmark-btn" onclick="toggleSave(this)">
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                </svg>
+                                Save
+                            </button>
+
+                            <a href="javascript:void(0)"
+                               class="ph-read-more"
+                               onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author')">
                                 Read full ↗
                             </a>
                         </div>
-                        <div class="btn-cancel" style="margin-left: auto;">
-                            @p.Anthology.Title
-                        </div>
-                    </div>
-                </article>
-            }
+                    </article>
+                }
+            </div>
 
-            <div id="noResults" style="display:none; text-align:center; padding: 2rem; color: #aaa;">
+            <div id="noResults" class="no-results">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
                 No poems or poets found matching your search.
             </div>
-        </div>
-    </main>
+        </main>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+        <!-- SIDEBAR — outside <main>, always stays in right column -->
+        <aside class="ph-sidebar">
 
-        <!-- Trending Tags -->
-        <div class="sidebar-block">
-            <p class="sidebar-title">Trending Tags</p>
-            <div class="tag-list">
-                <span class="tag">#loss</span><span class="tag">#nature</span>
-                <span class="tag">#love</span><span class="tag">#solitude</span>
-                <span class="tag">#seasons</span><span class="tag">#memory</span>
-                <span class="tag">#hope</span><span class="tag">#midnight</span>
-                <span class="tag">#ocean</span><span class="tag">#silence</span>
-            </div>
-        </div>
-
-        <!-- Poets to Follow -->
-        <div class="sidebar-block">
-            <p class="sidebar-title">Poets to Follow</p>
-
-            <div class="writer-row">
-                <div class="writer-avatar av-teal">M</div>
-                <div class="writer-info">
-                    <div class="writer-name">Marisol Vega</div>
-                    <div class="writer-poems">34 poems · Lyric</div>
+            <!-- Verse of the Day -->
+            <div class="ph-sb-block">
+                <p class="ph-sb-title">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                        <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z" />
+                        <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z" />
+                    </svg>
+                    Verse of the day
+                </p>
+                <div class="ph-quote">
+                    <div class="ph-quote-text" id="qotdText"></div>
+                    <div class="ph-quote-attr" id="qotdAttr"></div>
                 </div>
-                <button class="follow-btn" onclick="toggleFollow(this, 'Marisol Vega')">Follow</button>
             </div>
 
-            <div class="writer-row">
-                <div class="writer-avatar av-rose">J</div>
-                <div class="writer-info">
-                    <div class="writer-name">James Okafor</div>
-                    <div class="writer-poems">21 poems · Elegy</div>
+            <!-- Trending Tags -->
+            <div class="ph-sb-block">
+                <p class="ph-sb-title">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                        <polyline points="16 7 22 7 22 13" />
+                    </svg>
+                    Trending tags
+                </p>
+                <div class="ph-tags">
+                    <span class="ph-tag" onclick="filterByTag(this,'loss')">#loss</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'nature')">#nature</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'love')">#love</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'solitude')">#solitude</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'seasons')">#seasons</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'memory')">#memory</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'hope')">#hope</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'midnight')">#midnight</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'ocean')">#ocean</span>
+                    <span class="ph-tag" onclick="filterByTag(this,'silence')">#silence</span>
                 </div>
-                <button class="follow-btn" onclick="toggleFollow(this, 'James Okafor')">Follow</button>
             </div>
 
-            <div class="writer-row">
-                <div class="writer-avatar av-slate">L</div>
-                <div class="writer-info">
-                    <div class="writer-name">Lena Hoang</div>
-                    <div class="writer-poems">58 poems · Haiku</div>
+            <!-- Poets to Follow -->
+            <div class="ph-sb-block">
+                <p class="ph-sb-title">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Poets to follow
+                </p>
+                <div class="ph-writer-row">
+                    <div class="ph-writer-avt av-teal">M</div>
+                    <div><div class="ph-writer-name">Marisol Vega</div><div class="ph-writer-meta">34 poems · Lyric</div></div>
+                    <button class="ph-follow-btn"
+                            data-author="Marisol Vega"
+                            onclick="toggleFollow(this,'Marisol Vega')">
+                        Follow
+                    </button>
                 </div>
-                <button class="follow-btn" onclick="toggleFollow(this, 'Lena Hoang')">Follow</button>
-            </div>
-
-            <div class="writer-row">
-                <div class="writer-avatar av-peach">D</div>
-                <div class="writer-info">
-                    <div class="writer-name">Diego Ferreira</div>
-                    <div class="writer-poems">17 poems · Narrative</div>
+                <div class="ph-writer-row">
+                    <div class="ph-writer-avt av-rose">J</div>
+                    <div><div class="ph-writer-name">James Okafor</div><div class="ph-writer-meta">21 poems · Elegy</div></div>
+                    <button class="ph-follow-btn"
+                            data-author="James Okafor"
+                            onclick="toggleFollow(this,'James Okafor')">
+                        Follow
+                    </button>
                 </div>
-                <button class="follow-btn" onclick="toggleFollow(this, 'Diego Ferreira')">Follow</button>
+                <div class="ph-writer-row">
+                    <div class="ph-writer-avt av-slate">L</div>
+                    <div><div class="ph-writer-name">Lena Hoang</div><div class="ph-writer-meta">58 poems · Haiku</div></div>
+                    <button class="ph-follow-btn"
+                            data-author="Lena Hoang"
+                            onclick="toggleFollow(this,'Lena Hoang')">
+                        Follow
+                    </button>
+                </div>
+                <div class="ph-writer-row">
+                    <div class="ph-writer-avt av-peach">D</div>
+                    <div><div class="ph-writer-name">Diego Ferreira</div><div class="ph-writer-meta">17 poems · Narrative</div></div>
+                    <button class="ph-follow-btn"
+                            data-author="Diego Ferreira"
+                            onclick="toggleFollow(this,'Diego Ferreira')">
+                        Follow
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <!-- Write a Poem CTA -->
-        <div class="cta-block">
-            <p>Have words that deserve to be heard? Share your verse with the world.</p>
-            <button class="cta-btn" onclick="openUpload()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Write a Poem
-            </button>
-        </div>
-
-    </aside>
-        </div>
-</div>
-
-<!-- ═══════════════ NOTIFICATIONS PANEL ═══════════════ -->
-<div class="notif-overlay" id="notifOverlay" onclick="closeNotif(event)">
-    <div class="notif-panel">
-        <div class="notif-head">
-            <span>Notifications</span>
-            <button class="notif-clear" onclick="clearNotifs()">Mark all read</button>
-        </div>
-        <div id="notifList">
-            <!-- Dynamically populated by JS below -->
-        </div>
+        </aside>
     </div>
 </div>
 
-<!-- ═══════════════ UPLOAD / WRITE POEM MODAL ═══════════════ -->
-<div class="modal-overlay" id="uploadModal" onclick="closeModalOutside(event)">
-    <form asp-controller="Menu" asp-action="Create" method="post" class="modal">
-        @Html.AntiForgeryToken()
-        <div class="modal-head">
-            <h3>Share a <em>Verse</em></h3>
-            <button type="button" class="modal-close" onclick="closeUpload()">✕</button>
+<!-- FIXED FAB — always visible bottom-right -->
+<button class="ph-fab" onclick="openUpload()" title="Write a Poem" aria-label="Write a Poem">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+    <span class="ph-fab-label">Write a Poem</span>
+</button>
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="ph-notif-overlay" id="notifOverlay">
+    <div class="ph-notif-scrim" onclick="closeNotif()"></div>
+    <div class="ph-notif-panel">
+        <div class="ph-notif-head">
+            <span>Notifications</span>
+            <button class="ph-notif-clear" onclick="clearNotifs()">Mark all read</button>
         </div>
-        <div class="form-group">
+        <div class="ph-notif-list" id="notifList"></div>
+    </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="ph-modal-wrap" id="uploadModal" onclick="closeModalOutside(event,'uploadModal',closeUpload)">
+    <form asp-controller="Menu" asp-action="Create" method="post" class="ph-modal">
+        @Html.AntiForgeryToken()
+        <div class="ph-modal-head">
+            <h3>Share a <em>Verse</em></h3>
+            <button type="button" class="ph-modal-close" onclick="closeUpload()">✕</button>
+        </div>
+        <div class="ph-form-group">
             <label>Title</label>
             <input type="text" name="Title" placeholder="Give your poem a title…" required />
         </div>
-        <div class="form-group">
+        <div class="ph-form-group">
             <label>Your Verse</label>
             <textarea name="Text" placeholder="Write your poem here…" required></textarea>
         </div>
-        @*
-        <div class="form-group">
-            <label>Genre</label>
-            <select name="Genre">
-                <option>Lyric</option>
-                <option>Haiku</option>
-                <option>Sonnet</option>
-                <option>Free Verse</option>
-                <option>Elegy</option>
-                <option>Narrative</option>
-            </select>
-        </div>
-        *@
-        <div class="modal-foot">
-            <button type="button" class="btn-cancel" onclick="closeUpload()">Cancel</button>
-            <button type="submit" class="btn-publish">Publish</button>
+        <div class="ph-modal-foot">
+            <button type="button" class="ph-btn-cancel" onclick="closeUpload()">Cancel</button>
+            <button type="submit" class="ph-btn-publish">Publish</button>
         </div>
     </form>
 </div>
 
-<!-- ═══════════════ READ FULL POEM MODAL ═══════════════ -->
-<div class="modal-overlay" id="readModal" onclick="closeReadModalOutside(event)">
-    <div class="modal read-modal">
-        <div class="modal-head">
-            <h3>Anthology: <span id="readModalAnthologyTitle"></span></h3>
-            <button type="button" class="modal-close" onclick="closeReadModal()">✕</button>
+<!-- READ POEM MODAL -->
+<div class="ph-modal-wrap" id="readModal" onclick="closeModalOutside(event,'readModal',closeReadModal)">
+    <div class="ph-modal ph-read-modal">
+        <div class="ph-modal-head">
+            <div></div>
+            <button type="button" class="ph-modal-close" onclick="closeReadModal()">✕</button>
         </div>
-        <div class="modal-body">
-            <h2 id="readModalTitle" class="read-poem-title">Poem Title</h2>
-            <p class="read-author">by <span id="readModalAuthor">Author Name</span></p>
-            <div id="readModalText" class="read-text"></div>
+        <h2 class="ph-read-title" id="readModalTitle">—</h2>
+        <p class="ph-read-author">by <span id="readModalAuthor">—</span></p>
+        <div class="ph-read-text" id="readModalText"></div>
+        <div class="ph-modal-foot" style="margin-top:1.5rem;">
+            <button class="ph-btn-cancel" onclick="closeReadModal()">Close</button>
         </div>
-        @* commented because readModalAnthologyTitle is already displayed at the top
-        <div class="modal-foot">
-            <div class="btn-cancel" id="readModalAnthologyTitle"></div>
-        </div>
-        *@
     </div>
 </div>
 
-<!-- ═══════════════ INLINE STYLES FOR NEW ELEMENTS ═══════════════ -->
 <style>
-    /* Profile Dropdown */
-    .profile-dropdown {
-        position: absolute;
-        right: 1.5rem;
-        top: 4.2rem;
-        background: #fff;
-        border: 1px solid #e8e0d5;
-        border-radius: 12px;
-        padding: 1.2rem;
-        z-index: 3000;
-        min-width: 230px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    :root {
+        --ph-bg: #fdf6ee;
+        --ph-ink: #2c2318;
+        --ph-muted: #7a6a5a;
+        --ph-accent: #c8955a;
+        --ph-accent-dark: #a0714a;
+        --ph-border: rgba(180,145,100,0.18);
+        --ph-surface: #fff9f2;
+        --ph-card-bg: #ffffff;
+        --ph-radius: 14px;
+        --ph-nav-h: 60px;
+        --serif: 'Cormorant Garamond', Georgia, serif;
     }
-    .profile-header {
+
+    html {
+        overflow-y: scroll;
+        background: var(--ph-bg);
+    }
+
+    body {
+        padding-top: var(--ph-nav-h);
+        background: radial-gradient(circle at top left, rgba(200,149,90,0.08), transparent 30%), radial-gradient(circle at bottom right, rgba(200,149,90,0.06), transparent 25%), var(--ph-bg);
+    }
+    /* NAV */
+    .ph-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--ph-nav-h);
+        background: rgba(253,246,238,0.94);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--ph-border);
         display: flex;
         align-items: center;
-        gap: 0.8rem;
-        margin-bottom: 0.6rem;
+        padding: 0 1.75rem;
+        gap: 0.85rem;
+        z-index: 1000;
     }
-    .profile-avatar-lg {
-        width: 42px; height: 42px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #c8955a, #a0714a);
-        color: #fff;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.1rem; font-weight: 700;
+
+    .ph-logo {
+        font-family: var(--serif);
+        font-size: 1.3rem;
+        font-weight: 400;
+        font-style: italic;
+        color: var(--ph-ink);
+        text-decoration: none;
+        white-space: nowrap;
         flex-shrink: 0;
     }
-    .profile-username {
-        font-weight: 700; font-size: 0.95rem; margin: 0; color: #2c2c2c;
+
+        .ph-logo em {
+            color: var(--ph-accent);
+            font-style: normal;
+        }
+
+    .ph-nav-divider {
+        width: 1px;
+        height: 20px;
+        background: var(--ph-border);
+        flex-shrink: 0;
     }
-    .profile-email {
-        font-size: 0.78rem; color: #888; margin: 0.15rem 0 0;
+
+    .ph-search {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        background: var(--ph-surface);
+        border: 1px solid var(--ph-border);
+        border-radius: 30px;
+        padding: 0.35rem 0.85rem;
+        flex: 1;
+        max-width: 300px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        .ph-search:focus-within {
+            border-color: var(--ph-accent);
+            box-shadow: 0 0 0 3px rgba(200,149,90,0.1);
+        }
+
+        .ph-search svg {
+            color: var(--ph-muted);
+            flex-shrink: 0;
+        }
+
+        .ph-search input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.85rem;
+            color: var(--ph-ink);
+            width: 100%;
+            font-family: inherit;
+        }
+
+            .ph-search input::placeholder {
+                color: var(--ph-muted);
+            }
+
+    .ph-spacer {
+        flex: 1;
+    }
+
+    .ph-nav-action {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--ph-border);
+        background: var(--ph-surface);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--ph-muted);
+        flex-shrink: 0;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+        .ph-nav-action:hover {
+            background: var(--ph-accent);
+            color: #fff;
+            border-color: var(--ph-accent);
+        }
+
+    .ph-badge {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        background: #c0392b;
+        color: #fff;
+        font-size: 0.6rem;
+        font-weight: 700;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--ph-bg);
+        line-height: 1;
+    }
+
+    .ph-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--ph-accent), var(--ph-accent-dark));
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        border: 2px solid transparent;
+        transition: border-color 0.2s;
+    }
+
+        .ph-avatar:hover, .ph-avatar.active {
+            border-color: var(--ph-accent-dark);
+        }
+
+    /* PROFILE DROPDOWN */
+    .ph-profile-drop {
+        position: fixed;
+        top: calc(var(--ph-nav-h) + 8px);
+        right: 1.5rem;
+        background: var(--ph-card-bg);
+        border: 1px solid var(--ph-border);
+        border-radius: var(--ph-radius);
+        padding: 1rem;
+        z-index: 2000;
+        min-width: 220px;
+        box-shadow: 0 12px 36px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-6px);
+        transition: opacity 0.2s, transform 0.2s;
+    }
+
+        .ph-profile-drop.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+    .ph-profile-head {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .ph-profile-avatar-lg {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--ph-accent), var(--ph-accent-dark));
+        color: #fff;
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .ph-profile-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--ph-ink);
+        margin: 0;
+    }
+
+    .ph-profile-email {
+        font-size: 0.75rem;
+        color: var(--ph-muted);
+        margin: 2px 0 0;
         word-break: break-all;
     }
-    .profile-divider {
-        height: 1px; background: #f0ebe4; margin: 0.7rem 0;
-    }
-    .profile-link {
-        display: flex; align-items: center; gap: 0.5rem;
-        text-decoration: none; color: #4a4a4a;
-        font-size: 0.88rem; padding: 0.4rem 0;
-        transition: color 0.2s;
-    }
-    .profile-link:hover { color: #c8955a; }
-    .profile-logout {
-        display: flex; align-items: center; gap: 0.5rem;
-        background: none; border: none; color: #c0392b;
-        font-size: 0.88rem; cursor: pointer; padding: 0.4rem 0;
-        width: 100%; transition: opacity 0.2s;
-    }
-    .profile-logout:hover { opacity: 0.75; }
-    .profile-guest { font-size: 0.85rem; color: #888; margin: 0 0 0.5rem; }
 
-    /* Notification items */
-    .notif-item { display:flex; align-items:flex-start; gap:0.7rem; padding:0.75rem 0; border-bottom:1px solid #f0ebe4; }
-    .notif-item:last-child { border-bottom: none; }
-    .notif-dot { width:8px; height:8px; border-radius:50%; background:#c8955a; flex-shrink:0; margin-top:5px; }
-    .notif-dot.read { background:#ddd; }
-    .notif-item.unread { background: rgba(200,149,90,0.05); margin: 0 -0.5rem; padding: 0.75rem 0.5rem; border-radius: 6px; }
-    .notif-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; flex-shrink:0; color:#fff; }
-    .notif-text { font-size:0.85rem; color:#3a3a3a; line-height:1.4; }
-    .notif-time { font-size:0.75rem; color:#aaa; margin-top:0.2rem; }
-
-    /* Follow button states */
-    .follow-btn.following {
-        background: rgba(200,149,90,0.15);
-        color: #c8955a;
-        border-color: #c8955a;
+    .ph-drop-divider {
+        height: 1px;
+        background: var(--ph-border);
+        margin: 0.5rem 0;
     }
 
-    /* Toast notifications */
-    .toast {
+    .ph-drop-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--ph-muted);
+        font-size: 0.85rem;
+        padding: 0.4rem 0.35rem;
+        border-radius: 6px;
+        transition: background 0.15s, color 0.15s;
+    }
+
+        .ph-drop-link:hover {
+            background: rgba(200,149,90,0.08);
+            color: var(--ph-accent);
+        }
+
+    .ph-drop-logout {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: none;
+        border: none;
+        color: #c0392b;
+        font-size: 0.85rem;
+        cursor: pointer;
+        padding: 0.4rem 0.35rem;
+        border-radius: 6px;
+        width: 100%;
+        transition: background 0.15s;
+        font-family: inherit;
+    }
+
+        .ph-drop-logout:hover {
+            background: rgba(192,57,43,0.06);
+        }
+
+    .ph-profile-guest {
+        font-size: 0.85rem;
+        color: var(--ph-muted);
+        margin: 0 0 0.5rem;
+    }
+
+    /* NOTIFICATIONS */
+    .ph-notif-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1500;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+        .ph-notif-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+    .ph-notif-scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.06);
+    }
+
+    .ph-notif-panel {
+        position: absolute;
+        top: calc(var(--ph-nav-h) + 8px);
+        right: 3.5rem;
+        width: 320px;
+        max-height: 420px;
+        display: flex;
+        flex-direction: column;
+        background: var(--ph-card-bg);
+        border: 1px solid var(--ph-border);
+        border-radius: var(--ph-radius);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.05);
+        overflow: hidden;
+        transform: translateY(-8px) scale(0.98);
+        transition: transform 0.2s;
+    }
+
+    .ph-notif-overlay.open .ph-notif-panel {
+        transform: translateY(0) scale(1);
+    }
+
+    .ph-notif-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1rem 0.75rem;
+        border-bottom: 1px solid var(--ph-border);
+        flex-shrink: 0;
+    }
+
+        .ph-notif-head span {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--ph-ink);
+        }
+
+    .ph-notif-clear {
+        background: none;
+        border: none;
+        font-size: 0.78rem;
+        color: var(--ph-accent);
+        cursor: pointer;
+    }
+
+    .ph-notif-list {
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .ph-notif-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--ph-border);
+        transition: background 0.15s;
+    }
+
+        .ph-notif-item:last-child {
+            border-bottom: none;
+        }
+
+        .ph-notif-item.unread {
+            background: rgba(200,149,90,0.04);
+        }
+
+        .ph-notif-item:hover {
+            background: rgba(200,149,90,0.08);
+        }
+
+    .ph-notif-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ph-accent);
+        margin-top: 6px;
+        flex-shrink: 0;
+    }
+
+        .ph-notif-dot.read {
+            background: #ddd;
+        }
+
+    .ph-notif-avt {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        color: #fff;
+    }
+
+    .av-teal {
+        background: #1D9E75;
+    }
+
+    .av-rose {
+        background: #D4537E;
+    }
+
+    .av-slate {
+        background: #5F5E5A;
+    }
+
+    .av-peach {
+        background: #D85A30;
+    }
+
+    .av-sage {
+        background: #639922;
+    }
+
+    .av-amber {
+        background: #BA7517;
+    }
+
+    .ph-notif-text {
+        font-size: 0.82rem;
+        color: var(--ph-ink);
+        line-height: 1.4;
+    }
+
+    .ph-notif-time {
+        font-size: 0.72rem;
+        color: var(--ph-muted);
+        margin-top: 2px;
+    }
+
+    /* PAGE */
+    .ph-page {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.75rem 2rem;
+    }
+
+  
+    .ph-feed-title {
+        position: relative;
+    }
+
+        .ph-feed-title::before {
+            content: "✦";
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            color: rgba(200,149,90,0.5);
+            font-size: 0.8rem;
+        }
+
+        .ph-feed-title::after {
+            content: "✧";
+            position: absolute;
+            right: -18px;
+            top: 2px;
+            color: rgba(200,149,90,0.4);
+            font-size: 0.7rem;
+        }
+    /* TABS */
+    .ph-tabs {
+        display: flex;
+        gap: 0.2rem;
+        background: var(--ph-surface);
+        border: 1px solid var(--ph-border);
+        border-radius: 30px;
+        padding: 3px;
+    }
+
+    .ph-tab {
+        border: none;
+        background: transparent;
+        padding: 0.3rem 0.9rem;
+        border-radius: 25px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        color: var(--ph-muted);
+        transition: all 0.2s;
+        font-family: var(--serif);
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+        .ph-tab.active {
+            background: var(--ph-accent);
+            color: #fff;
+        }
+
+        .ph-tab:not(.active):hover {
+            color: var(--ph-ink);
+            background: rgba(200,149,90,0.08);
+        }
+
+    /* GRID — key fix: always 2 columns, sidebar never moves */
+    .ph-grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+        width: 100%;
+        align-items: start;
+    }
+
+        /* THIS is the important fix */
+        .ph-grid > main {
+            grid-column: 1;
+            width: 100%;
+            min-width: 0;
+            display: block;
+        }
+
+    /* force header to stay left-right */
+    .ph-feed-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* keep feed space even if empty */
+    .ph-feed {
+        width: 100%;
+        min-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.25rem;
+    }
+    
+
+
+    /* keep no-results inside left column */
+    .no-results {
+        width: 100%;
+        min-height: 60vh;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        text-align: center;
+        padding: 3rem 1rem;
+        gap: 0.75rem;
+    }
+
+    /* CARDS */
+    .ph-feed {
+        width: 100%;
+        min-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding-top: 1.25rem;
+        margin-top: 0;
+    }
+
+    .ph-poem-card {
+        background: linear-gradient(180deg, #fffdf9, #fffaf4);
+        border: 1px solid var(--ph-border);
+        border-radius: var(--ph-radius);
+        padding: 1.2rem 1.3rem;
+        position: relative;
+        box-shadow: 0 4px 16px rgba(180,145,100,0.06);
+        overflow: hidden;
+    }
+
+        .ph-poem-card:hover {
+            box-shadow: 0 6px 24px rgba(180,145,100,0.13);
+            transform: translateY(-2px);
+        }
+
+        .ph-poem-card::before {
+            content: "❝";
+            position: absolute;
+            top: 12px;
+            right: 45px;
+            font-size: 2.5rem;
+            color: rgba(200,149,90,0.12);
+            font-family: var(--serif);
+        }
+
+    .ph-card-badge {
+        position: absolute;
+        top: 0.85rem;
+        right: 0.85rem;
+        font-size: 0.65rem;
+        color: #D3AB79;
+        font-family: monospace;
+        background: rgba(200,149,90,0.07);
+        padding: 0.15rem 0.45rem;
+        border-radius: 20px;
+        border: 1px solid rgba(200,149,90,0.15);
+    }
+
+    .ph-author-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+
+   
+
+    .ph-author-avt {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--ph-accent), var(--ph-accent-dark));
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .ph-author-name {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--ph-ink);
+    }
+
+    .ph-author-genre {
+        font-size: 0.68rem;
+        color: var(--ph-accent);
+        background: rgba(200,149,90,0.1);
+        padding: 0.1rem 0.45rem;
+        border-radius: 20px;
+        margin-left: 0.15rem;
+    }
+
+    .ph-poem-title {
+        font-family: var(--serif);
+        font-size: 1.35rem;
+        font-style: italic;
+        color: var(--ph-ink);
+        margin-bottom: 0.45rem;
+        position: relative;
+    }
+
+        .ph-poem-title::after {
+            content: "";
+            display: block;
+            width: 40px;
+            height: 2px;
+            background: var(--ph-accent);
+            margin-top: 6px;
+            border-radius: 10px;
+            opacity: 0.5;
+        }
+
+    .ph-poem-excerpt {
+        font-size: 0.9rem;
+        color: var(--ph-muted);
+        line-height: 1.9;
+        max-height: 80px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 0.85rem;
+        padding-left: 0.8rem;
+        border-left: 2px solid rgba(200,149,90,0.18);
+    }
+
+        .ph-poem-excerpt::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 32px;
+            background: linear-gradient(transparent, #ffffff);
+            pointer-events: none;
+        }
+
+    .ph-card-foot {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    .ph-like-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.32rem;
+        background: none;
+        border: 1px solid var(--ph-border);
+        border-radius: 20px;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.78rem;
+        cursor: pointer;
+        color: var(--ph-muted);
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+        .ph-like-btn:hover, .ph-like-btn.liked {
+            border-color: #c0392b;
+            color: #c0392b;
+            background: rgba(192,57,43,0.05);
+        }
+
+    .ph-bookmark-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: none;
+        border: 1px solid var(--ph-border);
+        border-radius: 20px;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.78rem;
+        cursor: pointer;
+        color: var(--ph-muted);
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+        .ph-bookmark-btn:hover, .ph-bookmark-btn.saved {
+            border-color: var(--ph-accent);
+            color: var(--ph-accent);
+            background: rgba(200,149,90,0.06);
+        }
+
+    .ph-read-more {
+        margin-left: auto;
+        font-size: 0.79rem;
+        color: var(--ph-accent);
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+
+        .ph-read-more:hover {
+            opacity: 0.65;
+        }
+
+    /* SIDEBAR */
+    .ph-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        position: sticky;
+        top: calc(var(--ph-nav-h) + 1.25rem);
+    }
+
+    .ph-sb-block {
+        background: var(--ph-card-bg);
+        border: 1px solid var(--ph-border);
+        border-radius: var(--ph-radius);
+        padding: 1rem 1.05rem;
+    }
+
+    .ph-sb-title {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ph-muted);
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+        .ph-sb-title svg {
+            color: var(--ph-accent);
+        }
+
+    /* Verse of the Day */
+    .ph-quote {
+        border-left: 3px solid var(--ph-accent);
+        padding: 0.6rem 0.75rem;
+        background: rgba(200,149,90,0.04);
+        border-radius: 0 8px 8px 0;
+    }
+
+    .ph-quote-text {
+        font-size: 0.82rem;
+        font-style: italic;
+        color: var(--ph-ink);
+        line-height: 1.6;
+        margin-bottom: 0.25rem;
+    }
+
+    .ph-quote-attr {
+        font-size: 0.7rem;
+        color: var(--ph-accent);
+    }
+
+    /* TAGS */
+    .ph-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .ph-tag {
+        font-size: 0.72rem;
+        padding: 0.22rem 0.6rem;
+        border-radius: 20px;
+        background: var(--ph-surface);
+        border: 1px solid var(--ph-border);
+        color: var(--ph-muted);
+        cursor: pointer;
+        transition: all 0.16s;
+        font-family: var(--serif);
+    }
+
+        .ph-tag:hover {
+            background: var(--ph-accent);
+            border-color: var(--ph-accent);
+            color: #fff;
+        }
+
+        .ph-tag.active {
+            background: var(--ph-accent);
+            border-color: var(--ph-accent);
+            color: #fff;
+        }
+
+    /* WRITERS */
+    .ph-writer-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid var(--ph-border);
+    }
+
+        .ph-writer-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+    .ph-writer-avt {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .ph-writer-name {
+        font-size: 0.83rem;
+        font-weight: 700;
+        color: var(--ph-ink);
+    }
+
+    .ph-writer-meta {
+        font-size: 0.68rem;
+        color: var(--ph-muted);
+    }
+
+    .ph-follow-btn {
+        margin-left: auto;
+        font-size: 0.72rem;
+        padding: 0.22rem 0.7rem;
+        border: 1px solid var(--ph-border);
+        border-radius: 20px;
+        background: transparent;
+        cursor: pointer;
+        color: var(--ph-muted);
+        transition: all 0.2s;
+        white-space: nowrap;
+        font-family: inherit;
+    }
+
+        .ph-follow-btn:hover {
+            background: var(--ph-accent);
+            border-color: var(--ph-accent);
+            color: #fff;
+        }
+
+        .ph-follow-btn.following {
+            background: rgba(200,149,90,0.12);
+            border-color: var(--ph-accent);
+            color: var(--ph-accent);
+        }
+
+    /* FIXED FAB */
+    .ph-fab {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 2000;
+        background: var(--ph-accent);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        padding: 0.75rem 1.35rem 0.75rem 1.1rem;
+        font-size: 0.88rem;
+        font-family: var(--serif);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 20px rgba(200,149,90,0.45);
+        transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+    }
+
+        .ph-fab:hover {
+            background: var(--ph-accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(200,149,90,0.5);
+        }
+
+        .ph-fab:active {
+            transform: scale(0.97);
+        }
+
+    .ph-fab-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+    }
+
+    /* MODALS */
+    .ph-modal-wrap {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        background: rgba(40,30,20,0.42);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+    }
+
+        .ph-modal-wrap.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+    .ph-modal {
+        background: var(--ph-card-bg);
+        border-radius: 16px;
+        padding: 1.75rem;
+        width: min(480px,90vw);
+        border: 1px solid var(--ph-border);
+        transform: translateY(12px) scale(0.98);
+        transition: transform 0.25s;
+    }
+
+    .ph-modal-wrap.open .ph-modal {
+        transform: translateY(0) scale(1);
+    }
+
+    .ph-modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+    }
+
+        .ph-modal-head h3 {
+            font-family: var(--serif);
+            font-size: 1.3rem;
+            font-weight: 400;
+            color: var(--ph-ink);
+        }
+
+            .ph-modal-head h3 em {
+                color: var(--ph-accent);
+                font-style: italic;
+            }
+
+    .ph-modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--ph-muted);
+        font-size: 1rem;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+    }
+
+        .ph-modal-close:hover {
+            background: var(--ph-surface);
+            color: var(--ph-ink);
+        }
+
+    .ph-form-group {
+        margin-bottom: 1rem;
+    }
+
+        .ph-form-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--ph-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .ph-form-group input,
+        .ph-form-group textarea {
+            width: 100%;
+            background: var(--ph-surface);
+            border: 1px solid var(--ph-border);
+            border-radius: 8px;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.9rem;
+            color: var(--ph-ink);
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+            .ph-form-group input:focus,
+            .ph-form-group textarea:focus {
+                border-color: var(--ph-accent);
+                box-shadow: 0 0 0 3px rgba(200,149,90,0.1);
+            }
+
+        .ph-form-group textarea {
+            min-height: 140px;
+            resize: vertical;
+            line-height: 1.65;
+        }
+
+    .ph-modal-foot {
+        display: flex;
+        gap: 0.65rem;
+        justify-content: flex-end;
+        margin-top: 1.25rem;
+    }
+
+    .ph-btn-cancel {
+        background: none;
+        border: 1px solid var(--ph-border);
+        border-radius: 25px;
+        padding: 0.5rem 1.2rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: var(--ph-muted);
+        font-family: inherit;
+        transition: background 0.15s;
+    }
+
+        .ph-btn-cancel:hover {
+            background: var(--ph-surface);
+        }
+
+    .ph-btn-publish {
+        background: var(--ph-accent);
+        color: #fff;
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1.4rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.2s;
+    }
+
+        .ph-btn-publish:hover {
+            background: var(--ph-accent-dark);
+        }
+
+    /* READ MODAL */
+    .ph-read-modal {
+        max-width: 580px;
+        padding: 2rem 2.25rem;
+    }
+
+    .ph-read-title {
+        font-family: var(--serif);
+        font-size: 1.75rem;
+        font-style: italic;
+        color: var(--ph-ink);
+        margin-bottom: 0.35rem;
+    }
+
+    .ph-read-author {
+        font-size: 0.9rem;
+        color: var(--ph-accent);
+        font-style: italic;
+        margin-bottom: 1.25rem;
+    }
+
+    .ph-read-text {
+        font-size: 1.05rem;
+        line-height: 1.85;
+        color: #3a3a3a;
+        white-space: pre-wrap;
+        border-top: 1px solid var(--ph-border);
+        padding-top: 1.25rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    /* TOAST */
+    .ph-toast {
         position: fixed;
         bottom: 2rem;
         left: 50%;
@@ -378,148 +1459,168 @@
         display: flex;
         align-items: center;
         gap: 0.6rem;
-        padding: 0.85rem 1.4rem;
+        padding: 0.8rem 1.35rem;
         border-radius: 10px;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         font-weight: 500;
         z-index: 9999;
         box-shadow: 0 6px 24px rgba(0,0,0,0.15);
-        animation: toastIn 0.35s ease, toastOut 0.4s ease 3.5s forwards;
         white-space: nowrap;
-    }
-    .toast-success { background: #2d6a4f; color: #fff; }
-    .toast-error   { background: #c0392b; color: #fff; }
-    @@keyframes toastIn  { from { opacity:0; transform:translateX(-50%) translateY(1rem); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
-    @@keyframes toastOut { from { opacity:1; } to { opacity:0; pointer-events:none; } }
-
-
-    /* This is for displaying Poem ID at the topright corner*/
-    .poem-id {
-        font-size: 0.75rem;
-        color: #D3AB79;
-        font-family: monospace; 
-    }
-    .poem-card-header {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        margin-bottom: 0.5rem !important;
+        animation: phToastIn 0.3s ease, phToastOut 0.4s ease 3.5s forwards;
     }
 
-    .poem-author-info {
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
+    .ph-toast-success {
+        background: #2d6a4f;
+        color: #fff;
     }
 
-    /* This is for read full poem modal */
-    .read-modal {
-        max-width: 600px;
-        padding: 2rem;
-        
-        font-family: var(--serif);
-        font-size: 1.22rem;
-        font-weight: 400;
-        color: var(--ink);
+    .ph-toast-error {
+        background: #c0392b;
+        color: #fff;
     }
 
-    .read-author {
-        font-size: 0.95rem;
-        color: #a0714a;
-        margin: -0.5rem 0 1.5rem 0;
-        font-style: italic;
+    @@keyframes phToastIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     }
 
-    .read-text {
-        line-height: 1.8;
-        color: #333;
-        font-size: 1.1rem;
-        /* font-family: 'Georgia', serif;  A classic serif font looks better for poetry */
-        white-space: pre-wrap;
-        border-top: 1px solid #f0ebe4;
-        padding-top: 1.5rem;
+    @@keyframes phToastOut {
+        from {
+            opacity: 1;
+        }
 
-        word-wrap: break-word;
-        overflow-wrap: break-word;
+        to {
+            opacity: 0;
+            pointer-events: none;
+        }
     }
 
-    #readModalTitle {
-        font-size: 1.8rem;
-        color: #2c2c2c;
-        margin-bottom: 0.5rem;
-        font-style: italic;
-    }
-    
-    .poem-card.hidden {
-        display: none !important;
-    }
-    #feedList {
-        display: flex;
+    .no-results {
+        display: none;
+        width: 100%;
+        min-height: 60vh;
+        background: transparent;
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--ph-muted);
+        font-size: 0.9rem;
         flex-direction: column;
-        gap: 1.5rem;
-        /* IMPORTANT: This prevents the feedList from shrinking when empty */
-        min-height: 80vh; 
-        width: 100%;
-    }
-    
-    .poem-card {
-        transition: opacity 0.3s ease;
-        padding-bottom: 15px;
-    }
-    .main-layout-container {
-        display: grid;
-        /* Explicit columns keep the sidebar position locked */
-        grid-template-columns: minmax(0, 1fr) 300px;
-        gap: 20px;
-        align-items: start;
-        width: 100%;
-        max-width: 1100px; 
-        margin: 0 auto;
-        
-        min-width: 800px; 
-    }
-    main {
-        width: 100%;
-    }
-    html {
-        
-        overflow-y: scroll; 
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
     }
 
-    .poem-excerpt {
-        max-height: 100px;        
-        overflow: hidden;         
-        position: relative;       
+    @@media (max-width: 768px) {
+        .ph-grid {
+            grid-template-columns: 1fr;
+            width: 100%;
+        }
+
+            .ph-grid main {
+                width: 100%;
+            }
+
+        .ph-sidebar {
+            position: static;
+            width: 100%;
+        }
+
+        .ph-page {
+            padding: 1.25rem 1rem;
+        }
+
+        .ph-nav {
+            padding: 0 1rem;
+            gap: 0.6rem;
+        }
+
+        .ph-search {
+            max-width: 180px;
+        }
+
+       
     }
-    .poem-excerpt::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 40px;
-        background: linear-gradient(transparent, #ffffff);
-        pointer-events: none;
+
+    @@media (max-width: 480px) {
+        .ph-search {
+            display: none;
+        }
+
+        .ph-tabs {
+            display: none;
+        }
     }
+
+  .ph-main {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+    .ph-author-follow {
+        margin-left: 0.5rem; /* NOT auto */
+        font-size: 0.72rem;
+        padding: 0.22rem 0.75rem;
+        border: 1px solid var(--ph-border);
+        border-radius: 20px;
+        background: transparent;
+        cursor: pointer;
+        color: var(--ph-muted);
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+        .ph-author-follow:hover {
+            background: var(--ph-accent);
+            border-color: var(--ph-accent);
+            color: #fff;
+        }
+
+        .ph-author-follow.following {
+            background: rgba(200,149,90,0.12);
+            border-color: var(--ph-accent);
+            color: var(--ph-accent);
+        }
+
 </style>
 
 <script>
-    // ─── TOAST AUTO-REMOVE ────────────────────────────────────────────────────
+    // Toast auto-dismiss
     const toast = document.getElementById('toastBanner');
     if (toast) setTimeout(() => toast.remove(), 4000);
 
-    // Re-open modal if there was a publish error (e.g. validation failed)
-    @if (TempData["PublishError"] != null) {
-        <text>openUpload();</text>
+    @if (TempData["PublishError"] != null)
+    {
+            <text>openUpload();</text>
     }
 
-    // ─── NOTIFICATION DATA ─────────────────────────────────────────────────────
+    // ── Verse of the Day ──────────────────────────────────────────────────
+    const QUOTES = [
+        { text: '"Two roads diverged in a wood, and I — I took the one less traveled by."', attr: '— Robert Frost' },
+        { text: '"Hold fast to dreams, for if dreams die, life is a broken-winged bird."', attr: '— Langston Hughes' },
+        { text: '"Still I rise, like dust, I\'ll rise."', attr: '— Maya Angelou' },
+        { text: '"Once upon a midnight dreary, while I pondered, weak and weary…"', attr: '— Edgar Allan Poe' },
+        { text: '"The woods are lovely, dark and deep, but I have promises to keep."', attr: '— Robert Frost' },
+    ];
+    const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    document.getElementById('qotdText').textContent = q.text;
+    document.getElementById('qotdAttr').textContent = q.attr;
+
+    // ── Notifications ─────────────────────────────────────────────────────
     const NOTIFICATIONS = [
-        { type:'like',      unread:true,  av:'av-teal',  initial:'M', actor:'Marisol Vega',  poem:'"Ashes at Dawn"',   time:'2 minutes ago' },
-        { type:'like',      unread:true,  av:'av-slate',  initial:'L', actor:'Lena Hoang',    poem:'"Still Water"',     time:'15 minutes ago' },
-        { type:'follow',    unread:true,  av:'av-rose',  initial:'J', actor:'James Okafor',  poem:null,               time:'1 hour ago' },
-        { type:'followback',unread:false, av:'av-peach', initial:'D', actor:'Diego Ferreira',poem:null,               time:'Yesterday' },
-        { type:'like',      unread:false, av:'av-sage',  initial:'R', actor:'Riya Mehta',    poem:'"Tidal"',          time:'2 days ago' },
+        { type:'like',       unread:true,  av:'av-teal',  initial:'M', actor:'Marisol Vega',   poem:'"Ashes at Dawn"', time:'2 minutes ago'  },
+        { type:'like',       unread:true,  av:'av-slate', initial:'L', actor:'Lena Hoang',     poem:'"Still Water"',   time:'15 minutes ago' },
+        { type:'follow',     unread:true,  av:'av-rose',  initial:'J', actor:'James Okafor',   poem:null,              time:'1 hour ago'     },
+        { type:'followback', unread:false, av:'av-peach', initial:'D', actor:'Diego Ferreira', poem:null,              time:'Yesterday'      },
+        { type:'like',       unread:false, av:'av-sage',  initial:'R', actor:'Riya Mehta',     poem:'"Tidal"',         time:'2 days ago'     },
     ];
 
     function notifMessage(n) {
@@ -529,21 +1630,21 @@
         return '';
     }
 
-    function renderNotifs(list) {
-        document.getElementById('notifList').innerHTML = list.map(n => `
-            <div class="notif-item ${n.unread ? 'unread' : ''}">
-                <div class="notif-dot ${n.unread ? '' : 'read'}"></div>
-                <div class="notif-avatar ${n.av}">${n.initial}</div>
+    function renderNotifs() {
+        document.getElementById('notifList').innerHTML = NOTIFICATIONS.map(n => `
+            <div class="ph-notif-item ${n.unread ? 'unread' : ''}">
+                <div class="ph-notif-dot ${n.unread ? '' : 'read'}"></div>
+                <div class="ph-notif-avt ${n.av}">${n.initial}</div>
                 <div>
-                    <div class="notif-text">${notifMessage(n)}</div>
-                    <div class="notif-time">${n.time}</div>
+                    <div class="ph-notif-text">${notifMessage(n)}</div>
+                    <div class="ph-notif-time">${n.time}</div>
                 </div>
             </div>`).join('');
     }
+    renderNotifs();
 
-    renderNotifs(NOTIFICATIONS);
 
-    // Keep badge count = number of unread
+
     function updateBadge() {
         const count = NOTIFICATIONS.filter(n => n.unread).length;
         const badge = document.getElementById('notifBadge');
@@ -552,136 +1653,201 @@
     }
     updateBadge();
 
-    // ─── FOLLOW LOGIC (with follow-back notification) ──────────────────────────
-    function toggleFollow(btn, authorName) {
-        const isFollowing = btn.classList.contains('following');
-        if (isFollowing) {
-            btn.textContent = 'Follow';
-            btn.classList.remove('following');
-        } else {
-            btn.textContent = 'Following';
-            btn.classList.add('following');
-            // Add "You followed X" entry and simulate possible follow-back
-            addNotif({ type:'follow', unread:true, av:'av-amber', initial:'Y', actor:`You followed ${authorName}`, poem:null, time:'Just now' });
-            // 50% chance they follow back (for demo; replace with real server logic)
-            if (Math.random() > 0.5) {
-                setTimeout(() => {
-                    addNotif({ type:'followback', unread:true, av:'av-amber', initial: authorName[0], actor:authorName, poem:null, time:'Just now' });
-                }, 2000);
-            }
-        }
-    }
+    function addNotif(notif) { NOTIFICATIONS.unshift(notif); renderNotifs(); updateBadge(); }
+    function toggleNotif()   { document.getElementById('notifOverlay').classList.toggle('open'); }
+    function closeNotif()    { document.getElementById('notifOverlay').classList.remove('open'); }
+    function clearNotifs()   { NOTIFICATIONS.forEach(n => n.unread = false); renderNotifs(); updateBadge(); }
 
-    function addNotif(notif) {
-        NOTIFICATIONS.unshift(notif);
-        renderNotifs(NOTIFICATIONS);
-        updateBadge();
-    }
-
-    // ─── LIKE (client-side toggle; wire to server as needed) ──────────────────
-    function toggleLikeServer(btn, poemId) {
-        const path = btn.querySelector('path');
-        const countEl = btn.querySelector('.like-count');
-        const liked = btn.classList.toggle('liked');
-        let count = parseInt(countEl.textContent) || 0;
-        countEl.textContent = liked ? count + 1 : count - 1;
-        if (liked) { path.setAttribute('fill','#c0392b'); path.setAttribute('stroke','#c0392b'); }
-        else { path.removeAttribute('fill'); path.setAttribute('stroke','currentColor'); }
-        // Optionally POST to server:
-        // fetch(`/Menu/ToggleLike/${poemId}`, { method:'POST', headers:{'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value} });
-    }
-
-    // ─── TABS ──────────────────────────────────────────────────────────────────
-    function setTab(el, mode) {
-        el.closest('.feed-tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-    }
-
-    // ─── NOTIF PANEL ──────────────────────────────────────────────────────────
-    function toggleNotif() { document.getElementById('notifOverlay').classList.toggle('open'); }
-    function closeNotif(e) { if (e.target.id === 'notifOverlay') document.getElementById('notifOverlay').classList.remove('open'); }
-    function clearNotifs() {
-        NOTIFICATIONS.forEach(n => n.unread = false);
-        renderNotifs(NOTIFICATIONS);
-        updateBadge();
-    }
-
-    // ─── PROFILE DROPDOWN ─────────────────────────────────────────────────────
+    // ── Profile dropdown ──────────────────────────────────────────────────
     function toggleProfile() {
-        const d = document.getElementById('profileDropdown');
-        d.style.display = (d.style.display === 'none' || d.style.display === '') ? 'block' : 'none';
+        const d = document.getElementById('profileDrop');
+        const a = document.getElementById('profileAvatar');
+        const open = d.classList.toggle('open');
+        a.classList.toggle('active', open);
     }
-    // Close profile dropdown when clicking outside
     document.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('profileDropdown');
-        const avatar = document.querySelector('.nav-avatar');
-        if (dropdown && avatar && !dropdown.contains(e.target) && !avatar.contains(e.target)) {
-            dropdown.style.display = 'none';
+        const d = document.getElementById('profileDrop');
+        const a = document.getElementById('profileAvatar');
+        if (!d.contains(e.target) && !a.contains(e.target)) {
+            d.classList.remove('open');
+            a.classList.remove('active');
         }
     });
 
-    // ─── UPLOAD MODAL ─────────────────────────────────────────────────────────
+    // ── Tabs ──────────────────────────────────────────────────────────────
+    let currentTab = 'all';
+    let currentTag = null;
+    let followedAuthors = [];
+
+    function setTab(el, tab) {
+        currentTab = tab;
+
+        document.querySelectorAll('.ph-tab').forEach(t =>
+            t.classList.remove('active')
+        );
+        el.classList.add('active');
+
+        applyFilters();
+    }
+
+    // ── Tag filtering ─────────────────────────────────────────────────────
+    function filterByTag(el, tag) {
+        if (currentTag === tag) {
+            currentTag = null;
+            el.classList.remove('active');
+        } else {
+            currentTag = tag;
+            document.querySelectorAll('.ph-tag').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+        applyFilters();
+    }
+
+    // ── Combined filter (tab + tag + search) ──────────────────────────────
+    function applyFilters() {
+        const searchVal = (document.getElementById('poemSearch').value || '').toLowerCase();
+        const cards = document.querySelectorAll('.ph-poem-card');
+        const feed = document.getElementById('feedList');
+        const noResults = document.getElementById('noResults');
+
+        let visible = 0;
+
+        cards.forEach(card => {
+            const cardAuthor = (card.dataset.author || '').trim().toLowerCase();
+            const cardTitle = card.dataset.title || '';
+
+            let tabMatch = true;
+
+            // For You = all
+            if (currentTab === 'all') {
+                tabMatch = true;
+            }
+
+            // Following = only followed authors
+            else if (currentTab === 'following') {
+                tabMatch = followedAuthors.includes(cardAuthor);
+            }
+
+            // New = show nothing
+            else if (currentTab === 'new') {
+                tabMatch = false;
+            }
+
+            const searchMatch =
+                searchVal === '' ||
+                cardTitle.includes(searchVal) ||
+                cardAuthor.includes(searchVal);
+
+            const show = tabMatch && searchMatch;
+
+            card.style.display = show ? '' : 'none';
+
+            if (show) visible++;
+        });
+
+        if (visible === 0) {
+            feed.style.display = 'none';
+            noResults.style.display = 'flex';
+
+            if (currentTab === 'new') {
+                noResults.innerHTML = `
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v4"/>
+                        <path d="M12 16h.01"/>
+                    </svg>
+                    No new poems yet ✨
+                `;
+            }
+            else if (currentTab === 'following') {
+                noResults.innerHTML = `
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 12h8"/>
+                    </svg>
+                    Follow poets to see their poems 💛
+                `;
+            }
+            else {
+                noResults.innerHTML = `
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    No poems or poets found matching your search.
+                `;
+            }
+        } else {
+            feed.style.display = 'flex';
+            noResults.style.display = 'none';
+        }
+    }
+
+    // ── Save / Bookmark ───────────────────────────────────────────────────
+    function toggleSave(btn) {
+        const svg  = btn.querySelector('svg');
+        const isSaved = btn.classList.toggle('saved');
+        svg.setAttribute('fill', isSaved ? 'currentColor' : 'none');
+        btn.innerHTML = btn.innerHTML.replace(isSaved ? 'Save' : 'Saved', isSaved ? 'Saved' : 'Save');
+    }
+
+    // ── Modals ────────────────────────────────────────────────────────────
     function openUpload()  { document.getElementById('uploadModal').classList.add('open'); }
     function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); }
-    function closeModalOutside(e) { if (e.target.id === 'uploadModal') closeUpload(); }
 
+    function openReadModal(title, text, author) {
+        document.getElementById('readModalTitle').textContent  = title;
     // ─── READ FULL POEM MODAL ──────────────────────────────────────────────────
     function openReadModal(title, text, author, anthologyTitle) {
         document.getElementById('readModalAuthor').textContent = author;
+        document.getElementById('readModalText').textContent   = text;
         document.getElementById('readModalTitle').textContent = title;
         document.getElementById('readModalText').textContent = text;
         document.getElementById('readModalAnthologyTitle').textContent = anthologyTitle;
         document.getElementById('readModal').classList.add('open');
     }
+    function closeReadModal() { document.getElementById('readModal').classList.remove('open'); }
 
-    function closeReadModal() {
-        document.getElementById('readModal').classList.remove('open');
-    }
+    function closeModalOutside(e, id, fn) { if (e.target.id === id) fn(); }
 
-    function closeReadModalOutside(e) {
-        if (e.target.id === 'readModal') closeReadModal();
-    }
-
-    // ─── LIKE (Server-side update) ──────────────────
+    // ── Like (server) ─────────────────────────────────────────────────────
     async function toggleLikeServer(btn, poemId) {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-        const path = btn.querySelector('path');
+        const token   = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const path    = btn.querySelector('path');
         const countEl = btn.querySelector('.like-count');
-        
         const response = await fetch(`/Menu/ToggleLike?poemId=${poemId}`, {
             method: 'POST',
             headers: { 'RequestVerificationToken': token }
         });
-
         if (response.ok) {
             const result = await response.json();
             countEl.textContent = result.newCount;
             btn.classList.toggle('liked', result.liked);
-            path.setAttribute('fill', result.liked ? '#c0392b' : 'none');
+            path.setAttribute('fill',   result.liked ? '#c0392b' : 'none');
             path.setAttribute('stroke', result.liked ? '#c0392b' : 'currentColor');
         }
-    }
+        }function toggleFollow(btn, authorName) {
+        const author = authorName.trim().toLowerCase();
 
-    // ─── SEARCH FUNCTIONALITY ────────────────────────
-    function filterPoems() {
-        const input = document.getElementById('poemSearch');
-        const filter = input.value.toLowerCase();
-        const feedList = document.getElementById('feedList');
-        const poems = feedList.getElementsByClassName('poem-card');
-        let hasVisible = false;
+        const alreadyFollowing = followedAuthors.includes(author);
+        const isFollowing = !alreadyFollowing;
 
-        for (let i = 0; i < poems.length; i++) {
-            const title = poems[i].querySelector('.poem-title').innerText.toLowerCase();
-            const author = poems[i].querySelector('.author-name').innerText.toLowerCase();
-    
-            if (title.includes(filter) || author.includes(filter)) {
-                poems[i].classList.remove('hidden'); // Remove the hiding class
-                hasVisible = true;
-            } else {
-                poems[i].classList.add('hidden');    // Add the hiding class
-            }
+        if (isFollowing) {
+            followedAuthors.push(author);
+        } else {
+            followedAuthors = followedAuthors.filter(a => a !== author);
         }
 
-        document.getElementById('noResults').style.display = hasVisible ? 'none' : 'block';
+        // sync ALL buttons
+        document.querySelectorAll('.ph-author-follow, .ph-follow-btn').forEach(followBtn => {
+            const btnAuthor = followBtn.getAttribute('data-author');
+
+            if (btnAuthor && btnAuthor.trim().toLowerCase() === author) {
+                followBtn.classList.toggle('following', isFollowing);
+                followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+            }
+        });
+
+        applyFilters();
     }
 </script>
