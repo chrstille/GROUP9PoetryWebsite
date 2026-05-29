@@ -1797,13 +1797,8 @@
 
     function openReadModal(title, text, author) {
         document.getElementById('readModalTitle').textContent  = title;
-    // ─── READ FULL POEM MODAL ──────────────────────────────────────────────────
-    function openReadModal(title, text, author, anthologyTitle) {
         document.getElementById('readModalAuthor').textContent = author;
         document.getElementById('readModalText').textContent   = text;
-        document.getElementById('readModalTitle').textContent = title;
-        document.getElementById('readModalText').textContent = text;
-        document.getElementById('readModalAnthologyTitle').textContent = anthologyTitle;
         document.getElementById('readModal').classList.add('open');
     }
     function closeReadModal() { document.getElementById('readModal').classList.remove('open'); }

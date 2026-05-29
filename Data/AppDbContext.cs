@@ -11,6 +11,5 @@ namespace GROUP9PoetryWebsite.Data
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<PoemLike> Likes { get; set; } = null!;
-        public DbSet<Anthology> Anthologies { get; set; } = null!;
     }
 }
