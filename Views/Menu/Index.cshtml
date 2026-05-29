@@ -5,6 +5,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/menuindex.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/menuindex2.css" asp-append-version="true" />
 
 }
 
@@ -28,7 +29,7 @@
         <span class="ph-badge" id="notifBadge">3</span>
     </button>
     <div class="ph-avatar" id="profileAvatar" onclick="toggleProfile()" title="My Profile">
-        @(User.Identity.IsAuthenticated? User.Identity.Name.Substring(0, 1).ToUpper() : "G")
+        @(User.Identity.IsAuthenticated ? User.Identity.Name.Substring(0, 1).ToUpper() : "G")
     </div>
 </nav>
 
@@ -127,8 +128,9 @@
                 @foreach (var p in Model.Poems)
                 {
                     <article class="ph-poem-card"
+                             data-anthology="@p.Anthology.Title"
                              data-title="@p.Title.ToLower()"
-                             data-author="@(p.Author?.ToLower() ?? "")"
+                             data-author="@(p.Author?.ToLower() ?? string.Empty)"
                              data-tags=""
                              data-tab="all">
 
@@ -155,7 +157,7 @@
                             @{
                                 bool isLiked = ((HashSet<int>)ViewBag.LikedPoemIds).Contains(p.Id);
                             }
-                            <button class="ph-like-btn @(isLiked ? "liked" : "")"
+                            <button class="ph-like-btn @(isLiked ? "liked" : string.Empty)"
                                     onclick="toggleLikeServer(this, '@p.Id')">
                                 <svg viewBox="0 0 24 24" width="13" height="13">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
@@ -172,14 +174,15 @@
                                 </svg>
                                 Save
                             </button>
-                            @if (p.Anthology.Id != 1) // 1 is the default number for poems not belonging to an anthology
+                            @if (p.Anthology.Id != 1)
                             {
-                                <hr style="border-left: 1px solid var(--ph-accent); height: 25px">
+                                // 1 is the default number for poems not belonging to an anthology
+                                <hr style="border-left: 1px solid var(--ph-accent); height: 25px" />
                                 <button class="ph-bookmark-btn">Anthology: <i>@p.Anthology.Title</i></button>
                             }
                             <a href="javascript:void(0)"
-                               class="ph-read-more"
-                               onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author', '@p.Anthology.Title')">
+                                   class="ph-read-more"
+                                   onclick="openReadModal('@p.Title', '@System.Web.HttpUtility.JavaScriptStringEncode(p.Text)', '@p.Author', '@p.Anthology.Title')">
                                 Read full ↗
                             </a>
                         </div>
@@ -197,7 +200,7 @@
             </div>
         </main>
 
-        <!-- SIDEBAR — outside <main>, always stays in right column -->
+        <!-- SIDEBAR -->
         <aside class="ph-sidebar">
 
             <!-- Verse of the Day -->
@@ -215,26 +218,25 @@
                 </div>
             </div>
 
-            <!-- Trending Tags -->
+            <!-- Anthologies Sidebar -->
             <div class="ph-sb-block">
                 <p class="ph-sb-title">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                        <polyline points="16 7 22 7 22 13" />
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                     </svg>
-                    Trending tags
+                    Sort by Anthologies
                 </p>
                 <div class="ph-tags">
-                    <span class="ph-tag" onclick="filterByTag(this,'loss')">#loss</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'nature')">#nature</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'love')">#love</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'solitude')">#solitude</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'seasons')">#seasons</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'memory')">#memory</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'hope')">#hope</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'midnight')">#midnight</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'ocean')">#ocean</span>
-                    <span class="ph-tag" onclick="filterByTag(this,'silence')">#silence</span>
+                    @if (Model.AnthologyOptions != null)
+                    {
+                        @foreach (var anth in Model.AnthologyOptions)
+                        {
+                            <span class="ph-tag" onclick="filterByAnthology(this, '@anth.Text')">
+                                @anth.Text
+                            </span>
+                        }
+                    }
                 </div>
             </div>
 
@@ -251,7 +253,10 @@
                 </p>
                 <div class="ph-writer-row">
                     <div class="ph-writer-avt av-teal">M</div>
-                    <div><div class="ph-writer-name">Marisol Vega</div><div class="ph-writer-meta">34 poems · Lyric</div></div>
+                    <div>
+                        <div class="ph-writer-name">Marisol Vega</div>
+                        <div class="ph-writer-meta">34 poems · Lyric</div>
+                    </div>
                     <button class="ph-follow-btn"
                             data-author="Marisol Vega"
                             onclick="toggleFollow(this,'Marisol Vega')">
@@ -260,7 +265,10 @@
                 </div>
                 <div class="ph-writer-row">
                     <div class="ph-writer-avt av-rose">J</div>
-                    <div><div class="ph-writer-name">James Okafor</div><div class="ph-writer-meta">21 poems · Elegy</div></div>
+                    <div>
+                        <div class="ph-writer-name">James Okafor</div>
+                        <div class="ph-writer-meta">21 poems · Elegy</div>
+                    </div>
                     <button class="ph-follow-btn"
                             data-author="James Okafor"
                             onclick="toggleFollow(this,'James Okafor')">
@@ -269,7 +277,10 @@
                 </div>
                 <div class="ph-writer-row">
                     <div class="ph-writer-avt av-slate">L</div>
-                    <div><div class="ph-writer-name">Lena Hoang</div><div class="ph-writer-meta">58 poems · Haiku</div></div>
+                    <div>
+                        <div class="ph-writer-name">Lena Hoang</div>
+                        <div class="ph-writer-meta">58 poems · Haiku</div>
+                    </div>
                     <button class="ph-follow-btn"
                             data-author="Lena Hoang"
                             onclick="toggleFollow(this,'Lena Hoang')">
@@ -278,7 +289,10 @@
                 </div>
                 <div class="ph-writer-row">
                     <div class="ph-writer-avt av-peach">D</div>
-                    <div><div class="ph-writer-name">Diego Ferreira</div><div class="ph-writer-meta">17 poems · Narrative</div></div>
+                    <div>
+                        <div class="ph-writer-name">Diego Ferreira</div>
+                        <div class="ph-writer-meta">17 poems · Narrative</div>
+                    </div>
                     <button class="ph-follow-btn"
                             data-author="Diego Ferreira"
                             onclick="toggleFollow(this,'Diego Ferreira')">
@@ -288,6 +302,7 @@
             </div>
 
         </aside>
+
     </div>
 </div>
 
@@ -314,7 +329,7 @@
 
 <!-- UPLOAD MODAL -->
 <div class="ph-modal-wrap" id="uploadModal" onclick="closeModalOutside(event,'uploadModal',closeUpload)">
-    <form id="uploadModal" asp-controller="Menu" asp-action="Create" method="post" class="ph-modal">
+    <form id="uploadModalForm" asp-controller="Menu" asp-action="Create" method="post" class="ph-modal">
         @Html.AntiForgeryToken()
         <div class="ph-modal-head">
             <h3>Share a <em>Verse</em></h3>
@@ -380,16 +395,18 @@
     </div>
 </div>
 
-
 <script>
+    
     // Toast auto-dismiss
     const toast = document.getElementById('toastBanner');
     if (toast) setTimeout(() => toast.remove(), 4000);
 
+   
     @if (TempData["PublishError"] != null)
     {
-            <text>openUpload();</text>
+                        <text>openUpload();</text>
     }
+
 
     // ── Verse of the Day ──────────────────────────────────────────────────
     const QUOTES = [
@@ -492,85 +509,6 @@
         applyFilters();
     }
 
-    // ── Combined filter (tab + tag + search) ──────────────────────────────
-    function applyFilters() {
-        const searchVal = (document.getElementById('poemSearch').value || '').toLowerCase();
-        const cards = document.querySelectorAll('.ph-poem-card');
-        const feed = document.getElementById('feedList');
-        const noResults = document.getElementById('noResults');
-
-        let visible = 0;
-
-        cards.forEach(card => {
-            const cardAuthor = (card.dataset.author || '').trim().toLowerCase();
-            const cardTitle = card.dataset.title || '';
-
-            let tabMatch = true;
-
-            // For You = all
-            if (currentTab === 'all') {
-                tabMatch = true;
-            }
-
-            // Following = only followed authors
-            else if (currentTab === 'following') {
-                tabMatch = followedAuthors.includes(cardAuthor);
-            }
-
-            // New = show nothing
-            else if (currentTab === 'new') {
-                tabMatch = false;
-            }
-
-            const searchMatch =
-                searchVal === '' ||
-                cardTitle.includes(searchVal) ||
-                cardAuthor.includes(searchVal);
-
-            const show = tabMatch && searchMatch;
-
-            card.style.display = show ? '' : 'none';
-
-            if (show) visible++;
-        });
-
-        if (visible === 0) {
-            feed.style.display = 'none';
-            noResults.style.display = 'flex';
-
-            if (currentTab === 'new') {
-                noResults.innerHTML = `
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 8v4"/>
-                        <path d="M12 16h.01"/>
-                    </svg>
-                    No new poems yet ✨
-                `;
-            }
-            else if (currentTab === 'following') {
-                noResults.innerHTML = `
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M8 12h8"/>
-                    </svg>
-                    Follow poets to see their poems 💛
-                `;
-            }
-            else {
-                noResults.innerHTML = `
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="11" cy="11" r="8"/>
-                        <path d="M21 21l-4.35-4.35"/>
-                    </svg>
-                    No poems or poets found matching your search.
-                `;
-            }
-        } else {
-            feed.style.display = 'flex';
-            noResults.style.display = 'none';
-        }
-    }
 
     // ── Save / Bookmark ───────────────────────────────────────────────────
     function toggleSave(btn) {
@@ -663,1322 +601,51 @@
             inputField.value = ""; // Clear input field
         }
     }
+    let currentAnthology = null;
+
+    function filterByAnthology(el, anthologyTitle) {
+        if (currentAnthology === anthologyTitle) {
+            currentAnthology = null;
+            el.classList.remove('active');
+        } else {
+            currentAnthology = anthologyTitle;
+            document.querySelectorAll('.ph-tag').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+        applyFilters(); // Trigger the main filter logic
+    }
+
+    function applyFilters() {
+        const searchVal = (document.getElementById('poemSearch').value || '').toLowerCase();
+        const cards = document.querySelectorAll('.ph-poem-card');
+        const feed = document.getElementById('feedList');
+        const noResults = document.getElementById('noResults');
+
+        let visible = 0;
+
+        cards.forEach(card => {
+            const cardAuthor = (card.dataset.author || '').trim().toLowerCase();
+            const cardTitle = card.dataset.title || '';
+            const cardAnthology = card.dataset.anthology || '';
+
+            // Tab Filtering
+            let tabMatch = (currentTab === 'all') ? true :
+                           (currentTab === 'following' ? followedAuthors.includes(cardAuthor) : false);
+
+            // Search Filtering
+            const searchMatch = searchVal === '' || cardTitle.includes(searchVal) || cardAuthor.includes(searchVal);
+
+            // Anthology Filtering
+            const anthMatch = (currentAnthology === null) ? true : (cardAnthology === currentAnthology);
+
+            const show = tabMatch && searchMatch && anthMatch;
+
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        // Toggle no-results display logic...
+        feed.style.display = visible > 0 ? 'flex' : 'none';
+        noResults.style.display = visible > 0 ? 'none' : 'flex';
+    }
 </script>
-
-<style>
-    :root {
-        --ph-bg: #fdf6ee;
-        --ph-ink: #2c2318;
-        --ph-muted: #7a6a5a;
-        --ph-accent: #c8955a;
-        --ph-accent-dark: #a0714a;
-        --ph-border: rgba(180,145,100,0.18);
-        --ph-surface: #fff9f2;
-        --ph-card-bg: #ffffff;
-        --ph-radius: 14px;
-        --ph-nav-h: 60px;
-        --serif: 'Cormorant Garamond', Georgia, serif;
-    }
-
-    html {
-        overflow-y: scroll;
-        background: var(--ph-bg);
-    }
-
-    body {
-        padding-top: var(--ph-nav-h);
-        background: radial-gradient(circle at top left, rgba(200,149,90,0.08), transparent 30%), radial-gradient(circle at bottom right, rgba(200,149,90,0.06), transparent 25%), var(--ph-bg);
-    }
-    /* NAV */
-    .ph-nav {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: var(--ph-nav-h);
-        background: rgba(253,246,238,0.94);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border-bottom: 1px solid var(--ph-border);
-        display: flex;
-        align-items: center;
-        padding: 0 1.75rem;
-        gap: 0.85rem;
-        z-index: 1000;
-    }
-
-    .ph-logo {
-        font-family: var(--serif);
-        font-size: 1.3rem;
-        font-weight: 400;
-        font-style: italic;
-        color: var(--ph-ink);
-        text-decoration: none;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-
-        .ph-logo em {
-            color: var(--ph-accent);
-            font-style: normal;
-        }
-
-    .ph-nav-divider {
-        width: 1px;
-        height: 20px;
-        background: var(--ph-border);
-        flex-shrink: 0;
-    }
-
-    .ph-search {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        background: var(--ph-surface);
-        border: 1px solid var(--ph-border);
-        border-radius: 30px;
-        padding: 0.35rem 0.85rem;
-        flex: 1;
-        max-width: 300px;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-        .ph-search:focus-within {
-            border-color: var(--ph-accent);
-            box-shadow: 0 0 0 3px rgba(200,149,90,0.1);
-        }
-
-        .ph-search svg {
-            color: var(--ph-muted);
-            flex-shrink: 0;
-        }
-
-        .ph-search input {
-            border: none;
-            background: transparent;
-            outline: none;
-            font-size: 0.85rem;
-            color: var(--ph-ink);
-            width: 100%;
-            font-family: inherit;
-        }
-
-            .ph-search input::placeholder {
-                color: var(--ph-muted);
-            }
-
-    .ph-spacer {
-        flex: 1;
-    }
-
-    .ph-nav-action {
-        position: relative;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: 1px solid var(--ph-border);
-        background: var(--ph-surface);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: var(--ph-muted);
-        flex-shrink: 0;
-        transition: background 0.2s, color 0.2s, border-color 0.2s;
-    }
-
-        .ph-nav-action:hover {
-            background: var(--ph-accent);
-            color: #fff;
-            border-color: var(--ph-accent);
-        }
-
-    .ph-badge {
-        position: absolute;
-        top: -3px;
-        right: -3px;
-        background: #c0392b;
-        color: #fff;
-        font-size: 0.6rem;
-        font-weight: 700;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid var(--ph-bg);
-        line-height: 1;
-    }
-
-    .ph-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--ph-accent), var(--ph-accent-dark));
-        color: #fff;
-        font-weight: 700;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        flex-shrink: 0;
-        border: 2px solid transparent;
-        transition: border-color 0.2s;
-    }
-
-        .ph-avatar:hover, .ph-avatar.active {
-            border-color: var(--ph-accent-dark);
-        }
-
-    /* PROFILE DROPDOWN */
-    .ph-profile-drop {
-        position: fixed;
-        top: calc(var(--ph-nav-h) + 8px);
-        right: 1.5rem;
-        background: var(--ph-card-bg);
-        border: 1px solid var(--ph-border);
-        border-radius: var(--ph-radius);
-        padding: 1rem;
-        z-index: 2000;
-        min-width: 220px;
-        box-shadow: 0 12px 36px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
-        opacity: 0;
-        pointer-events: none;
-        transform: translateY(-6px);
-        transition: opacity 0.2s, transform 0.2s;
-    }
-
-        .ph-profile-drop.open {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
-
-    .ph-profile-head {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding-bottom: 0.75rem;
-    }
-
-    .ph-profile-avatar-lg {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--ph-accent), var(--ph-accent-dark));
-        color: #fff;
-        font-weight: 700;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .ph-profile-name {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--ph-ink);
-        margin: 0;
-    }
-
-    .ph-profile-email {
-        font-size: 0.75rem;
-        color: var(--ph-muted);
-        margin: 2px 0 0;
-        word-break: break-all;
-    }
-
-    .ph-drop-divider {
-        height: 1px;
-        background: var(--ph-border);
-        margin: 0.5rem 0;
-    }
-
-    .ph-drop-link {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        text-decoration: none;
-        color: var(--ph-muted);
-        font-size: 0.85rem;
-        padding: 0.4rem 0.35rem;
-        border-radius: 6px;
-        transition: background 0.15s, color 0.15s;
-    }
-
-        .ph-drop-link:hover {
-            background: rgba(200,149,90,0.08);
-            color: var(--ph-accent);
-        }
-
-    .ph-drop-logout {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: none;
-        border: none;
-        color: #c0392b;
-        font-size: 0.85rem;
-        cursor: pointer;
-        padding: 0.4rem 0.35rem;
-        border-radius: 6px;
-        width: 100%;
-        transition: background 0.15s;
-        font-family: inherit;
-    }
-
-        .ph-drop-logout:hover {
-            background: rgba(192,57,43,0.06);
-        }
-
-    .ph-profile-guest {
-        font-size: 0.85rem;
-        color: var(--ph-muted);
-        margin: 0 0 0.5rem;
-    }
-
-    /* NOTIFICATIONS */
-    .ph-notif-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 1500;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-
-        .ph-notif-overlay.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-    .ph-notif-scrim {
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0.06);
-    }
-
-    .ph-notif-panel {
-        position: absolute;
-        top: calc(var(--ph-nav-h) + 8px);
-        right: 3.5rem;
-        width: 320px;
-        max-height: 420px;
-        display: flex;
-        flex-direction: column;
-        background: var(--ph-card-bg);
-        border: 1px solid var(--ph-border);
-        border-radius: var(--ph-radius);
-        box-shadow: 0 16px 48px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.05);
-        overflow: hidden;
-        transform: translateY(-8px) scale(0.98);
-        transition: transform 0.2s;
-    }
-
-    .ph-notif-overlay.open .ph-notif-panel {
-        transform: translateY(0) scale(1);
-    }
-
-    .ph-notif-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1rem 0.75rem;
-        border-bottom: 1px solid var(--ph-border);
-        flex-shrink: 0;
-    }
-
-        .ph-notif-head span {
-            font-weight: 600;
-            font-size: 0.88rem;
-            color: var(--ph-ink);
-        }
-
-    .ph-notif-clear {
-        background: none;
-        border: none;
-        font-size: 0.78rem;
-        color: var(--ph-accent);
-        cursor: pointer;
-    }
-
-    .ph-notif-list {
-        overflow-y: auto;
-        flex: 1;
-    }
-
-    .ph-notif-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.65rem;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--ph-border);
-        transition: background 0.15s;
-    }
-
-        .ph-notif-item:last-child {
-            border-bottom: none;
-        }
-
-        .ph-notif-item.unread {
-            background: rgba(200,149,90,0.04);
-        }
-
-        .ph-notif-item:hover {
-            background: rgba(200,149,90,0.08);
-        }
-
-    .ph-notif-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--ph-accent);
-        margin-top: 6px;
-        flex-shrink: 0;
-    }
-
-        .ph-notif-dot.read {
-            background: #ddd;
-        }
-
-    .ph-notif-avt {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 700;
-        flex-shrink: 0;
-        color: #fff;
-    }
-
-    .av-teal {
-        background: #1D9E75;
-    }
-
-    .av-rose {
-        background: #D4537E;
-    }
-
-    .av-slate {
-        background: #5F5E5A;
-    }
-
-    .av-peach {
-        background: #D85A30;
-    }
-
-    .av-sage {
-        background: #639922;
-    }
-
-    .av-amber {
-        background: #BA7517;
-    }
-
-    .ph-notif-text {
-        font-size: 0.82rem;
-        color: var(--ph-ink);
-        line-height: 1.4;
-    }
-
-    .ph-notif-time {
-        font-size: 0.72rem;
-        color: var(--ph-muted);
-        margin-top: 2px;
-    }
-
-    /* PAGE */
-    .ph-page {
-        width: 100%;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 1.75rem 2rem;
-    }
-
-  
-    .ph-feed-title {
-        position: relative;
-    }
-
-        .ph-feed-title::before {
-            content: "✦";
-            position: absolute;
-            left: -20px;
-            top: 4px;
-            color: rgba(200,149,90,0.5);
-            font-size: 0.8rem;
-        }
-
-        .ph-feed-title::after {
-            content: "✧";
-            position: absolute;
-            right: -18px;
-            top: 2px;
-            color: rgba(200,149,90,0.4);
-            font-size: 0.7rem;
-        }
-    /* TABS */
-    .ph-tabs {
-        display: flex;
-        gap: 0.2rem;
-        background: var(--ph-surface);
-        border: 1px solid var(--ph-border);
-        border-radius: 30px;
-        padding: 3px;
-    }
-
-    .ph-tab {
-        border: none;
-        background: transparent;
-        padding: 0.3rem 0.9rem;
-        border-radius: 25px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        color: var(--ph-muted);
-        transition: all 0.2s;
-        font-family: var(--serif);
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-
-        .ph-tab.active {
-            background: var(--ph-accent);
-            color: #fff;
-        }
-
-        .ph-tab:not(.active):hover {
-            color: var(--ph-ink);
-            background: rgba(200,149,90,0.08);
-        }
-
-    /* GRID — key fix: always 2 columns, sidebar never moves */
-    .ph-grid {
-        display: grid;
-        grid-template-columns: 1fr 320px;
-        gap: 2rem;
-        width: 100%;
-        align-items: start;
-    }
-
-        /* THIS is the important fix */
-        .ph-grid > main {
-            grid-column: 1;
-            width: 100%;
-            min-width: 0;
-            display: block;
-        }
-
-    /* force header to stay left-right */
-    .ph-feed-header {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    /* keep feed space even if empty */
-    .ph-feed {
-        width: 100%;
-        min-height: 60vh;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-top: 1.25rem;
-    }
-
-    
-
-    /* keep no-results inside left column */
-    .no-results {
-        width: 100%;
-        min-height: 60vh;
-        display: none;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        text-align: center;
-        padding: 3rem 1rem;
-        gap: 0.75rem;
-    }
-
-    /* CARDS */
-    .ph-feed {
-        width: 100%;
-        min-height: 60vh;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding-top: 1.25rem;
-        margin-top: 0;
-    }
-
-    .ph-poem-card {
-        background: linear-gradient(180deg, #fffdf9, #fffaf4);
-        border: 1px solid var(--ph-border);
-        border-radius: var(--ph-radius);
-        padding: 1.2rem 1.3rem;
-        position: relative;
-        box-shadow: 0 4px 16px rgba(180,145,100,0.06);
-        overflow: hidden;
-    }
-
-        .ph-poem-card:hover {
-            box-shadow: 0 6px 24px rgba(180,145,100,0.13);
-            transform: translateY(-2px);
-        }
-
-        .ph-poem-card::before {
-            content: "❝";
-            position: absolute;
-            top: 12px;
-            right: 45px;
-            font-size: 2.5rem;
-            color: rgba(200,149,90,0.12);
-            font-family: var(--serif);
-        }
-
-    .ph-card-badge {
-        position: absolute;
-        top: 0.85rem;
-        right: 0.85rem;
-        font-size: 0.65rem;
-        color: #D3AB79;
-        font-family: monospace;
-        background: rgba(200,149,90,0.07);
-        padding: 0.15rem 0.45rem;
-        border-radius: 20px;
-        border: 1px solid rgba(200,149,90,0.15);
-    }
-
-    .ph-author-row {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-
-   
-
-    .ph-author-avt {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--ph-accent), var(--ph-accent-dark));
-        color: #fff;
-        font-size: 0.72rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .ph-author-name {
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--ph-ink);
-    }
-
-    .ph-author-genre {
-        font-size: 0.68rem;
-        color: var(--ph-accent);
-        background: rgba(200,149,90,0.1);
-        padding: 0.1rem 0.45rem;
-        border-radius: 20px;
-        margin-left: 0.15rem;
-    }
-
-    .ph-poem-title {
-        font-family: var(--serif);
-        font-size: 1.35rem;
-        font-style: italic;
-        color: var(--ph-ink);
-        margin-bottom: 0.45rem;
-        position: relative;
-    }
-
-        .ph-poem-title::after {
-            content: "";
-            display: block;
-            width: 40px;
-            height: 2px;
-            background: var(--ph-accent);
-            margin-top: 6px;
-            border-radius: 10px;
-            opacity: 0.5;
-        }
-
-    .ph-poem-excerpt {
-        font-size: 0.9rem;
-        color: var(--ph-muted);
-        line-height: 1.9;
-        max-height: 80px;
-        overflow: hidden;
-        position: relative;
-        margin-bottom: 0.85rem;
-        padding-left: 0.8rem;
-        border-left: 2px solid rgba(200,149,90,0.18);
-    }
-
-        .ph-poem-excerpt::after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 32px;
-            background: linear-gradient(transparent, #ffffff);
-            pointer-events: none;
-        }
-
-    .ph-card-foot {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-    }
-
-    .ph-like-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.32rem;
-        background: none;
-        border: 1px solid var(--ph-border);
-        border-radius: 20px;
-        padding: 0.25rem 0.6rem;
-        font-size: 0.78rem;
-        cursor: pointer;
-        color: var(--ph-muted);
-        transition: all 0.2s;
-        font-family: inherit;
-    }
-
-        .ph-like-btn:hover, .ph-like-btn.liked {
-            border-color: #c0392b;
-            color: #c0392b;
-            background: rgba(192,57,43,0.05);
-        }
-
-    .ph-bookmark-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-        background: none;
-        border: 1px solid var(--ph-border);
-        border-radius: 20px;
-        padding: 0.25rem 0.6rem;
-        font-size: 0.78rem;
-        cursor: pointer;
-        color: var(--ph-muted);
-        transition: all 0.2s;
-        font-family: inherit;
-    }
-
-        .ph-bookmark-btn:hover, .ph-bookmark-btn.saved {
-            border-color: var(--ph-accent);
-            color: var(--ph-accent);
-            background: rgba(200,149,90,0.06);
-        }
-
-    .ph-read-more {
-        margin-left: auto;
-        font-size: 0.79rem;
-        color: var(--ph-accent);
-        text-decoration: none;
-        transition: opacity 0.2s;
-    }
-
-        .ph-read-more:hover {
-            opacity: 0.65;
-        }
-
-    /* SIDEBAR */
-    .ph-sidebar {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        position: sticky;
-        top: calc(var(--ph-nav-h) + 1.25rem);
-    }
-
-    .ph-sb-block {
-        background: var(--ph-card-bg);
-        border: 1px solid var(--ph-border);
-        border-radius: var(--ph-radius);
-        padding: 1rem 1.05rem;
-    }
-
-    .ph-sb-title {
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--ph-muted);
-        margin-bottom: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
-    }
-
-        .ph-sb-title svg {
-            color: var(--ph-accent);
-        }
-
-    /* Verse of the Day */
-    .ph-quote {
-        border-left: 3px solid var(--ph-accent);
-        padding: 0.6rem 0.75rem;
-        background: rgba(200,149,90,0.04);
-        border-radius: 0 8px 8px 0;
-    }
-
-    .ph-quote-text {
-        font-size: 0.82rem;
-        font-style: italic;
-        color: var(--ph-ink);
-        line-height: 1.6;
-        margin-bottom: 0.25rem;
-    }
-
-    .ph-quote-attr {
-        font-size: 0.7rem;
-        color: var(--ph-accent);
-    }
-
-    /* TAGS */
-    .ph-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-    }
-
-    .ph-tag {
-        font-size: 0.72rem;
-        padding: 0.22rem 0.6rem;
-        border-radius: 20px;
-        background: var(--ph-surface);
-        border: 1px solid var(--ph-border);
-        color: var(--ph-muted);
-        cursor: pointer;
-        transition: all 0.16s;
-        font-family: var(--serif);
-    }
-
-        .ph-tag:hover {
-            background: var(--ph-accent);
-            border-color: var(--ph-accent);
-            color: #fff;
-        }
-
-        .ph-tag.active {
-            background: var(--ph-accent);
-            border-color: var(--ph-accent);
-            color: #fff;
-        }
-
-    /* WRITERS */
-    .ph-writer-row {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        padding: 0.45rem 0;
-        border-bottom: 1px solid var(--ph-border);
-    }
-
-        .ph-writer-row:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-    .ph-writer-avt {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        color: #fff;
-        font-size: 0.78rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .ph-writer-name {
-        font-size: 0.83rem;
-        font-weight: 700;
-        color: var(--ph-ink);
-    }
-
-    .ph-writer-meta {
-        font-size: 0.68rem;
-        color: var(--ph-muted);
-    }
-
-    .ph-follow-btn {
-        margin-left: auto;
-        font-size: 0.72rem;
-        padding: 0.22rem 0.7rem;
-        border: 1px solid var(--ph-border);
-        border-radius: 20px;
-        background: transparent;
-        cursor: pointer;
-        color: var(--ph-muted);
-        transition: all 0.2s;
-        white-space: nowrap;
-        font-family: inherit;
-    }
-
-        .ph-follow-btn:hover {
-            background: var(--ph-accent);
-            border-color: var(--ph-accent);
-            color: #fff;
-        }
-
-        .ph-follow-btn.following {
-            background: rgba(200,149,90,0.12);
-            border-color: var(--ph-accent);
-            color: var(--ph-accent);
-        }
-
-    /* FIXED FAB */
-    .ph-fab {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        z-index: 2000;
-        background: var(--ph-accent);
-        color: #fff;
-        border: none;
-        border-radius: 50px;
-        padding: 0.75rem 1.35rem 0.75rem 1.1rem;
-        font-size: 0.88rem;
-        font-family: var(--serif);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        box-shadow: 0 4px 20px rgba(200,149,90,0.45);
-        transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-        white-space: nowrap;
-    }
-
-        .ph-fab:hover {
-            background: var(--ph-accent-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(200,149,90,0.5);
-        }
-
-        .ph-fab:active {
-            transform: scale(0.97);
-        }
-
-    .ph-fab-label {
-        font-size: 0.85rem;
-        font-weight: 500;
-        letter-spacing: 0.01em;
-    }
-
-    /* MODALS */
-    .ph-modal-wrap {
-        position: fixed;
-        inset: 0;
-        z-index: 3000;
-        background: rgba(40,30,20,0.42);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s;
-    }
-
-        .ph-modal-wrap.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-    .ph-modal {
-        background: var(--ph-card-bg);
-        border-radius: 16px;
-        padding: 1.75rem;
-        width: min(480px,90vw);
-        border: 1px solid var(--ph-border);
-        transform: translateY(12px) scale(0.98);
-        transition: transform 0.25s;
-    }
-
-    .ph-modal-wrap.open .ph-modal {
-        transform: translateY(0) scale(1);
-    }
-
-    .ph-modal-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.25rem;
-    }
-
-        .ph-modal-head h3 {
-            font-family: var(--serif);
-            font-size: 1.3rem;
-            font-weight: 400;
-            color: var(--ph-ink);
-        }
-
-            .ph-modal-head h3 em {
-                color: var(--ph-accent);
-                font-style: italic;
-            }
-
-    .ph-modal-close {
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--ph-muted);
-        font-size: 1rem;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.15s;
-    }
-
-        .ph-modal-close:hover {
-            background: var(--ph-surface);
-            color: var(--ph-ink);
-        }
-
-    .ph-form-group {
-        margin-bottom: 1rem;
-    }
-
-        .ph-form-group label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: var(--ph-muted);
-            margin-bottom: 0.4rem;
-        }
-
-        .ph-form-group input,
-        .ph-form-group textarea {
-            width: 100%;
-            background: var(--ph-surface);
-            border: 1px solid var(--ph-border);
-            border-radius: 8px;
-            padding: 0.65rem 0.85rem;
-            font-size: 0.9rem;
-            color: var(--ph-ink);
-            outline: none;
-            font-family: inherit;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-            .ph-form-group input:focus,
-            .ph-form-group textarea:focus {
-                border-color: var(--ph-accent);
-                box-shadow: 0 0 0 3px rgba(200,149,90,0.1);
-            }
-
-        .ph-form-group textarea {
-            min-height: 140px;
-            resize: vertical;
-            line-height: 1.65;
-        }
-
-    .ph-modal-foot {
-        display: flex;
-        gap: 0.65rem;
-        justify-content: flex-end;
-        margin-top: 1.25rem;
-    }
-
-    .ph-btn-cancel {
-        background: none;
-        border: 1px solid var(--ph-border);
-        border-radius: 25px;
-        padding: 0.5rem 1.2rem;
-        font-size: 0.85rem;
-        cursor: pointer;
-        color: var(--ph-muted);
-        font-family: inherit;
-        transition: background 0.15s;
-    }
-
-        .ph-btn-cancel:hover {
-            background: var(--ph-surface);
-        }
-
-    .ph-btn-publish {
-        background: var(--ph-accent);
-        color: #fff;
-        border: none;
-        border-radius: 25px;
-        padding: 0.5rem 1.4rem;
-        font-size: 0.85rem;
-        cursor: pointer;
-        font-family: inherit;
-        transition: background 0.2s;
-    }
-
-        .ph-btn-publish:hover {
-            background: var(--ph-accent-dark);
-        }
-
-    /* READ MODAL */
-    .ph-read-modal {
-        max-width: 580px;
-        padding: 2rem 2.25rem;
-    }
-
-    .ph-read-title {
-        font-family: var(--serif);
-        font-size: 1.75rem;
-        font-style: italic;
-        color: var(--ph-ink);
-        margin-bottom: 0.35rem;
-    }
-
-    .ph-read-author {
-        font-size: 0.9rem;
-        color: var(--ph-accent);
-        font-style: italic;
-        margin-bottom: 1.25rem;
-    }
-
-    .ph-read-text {
-        font-size: 1.05rem;
-        line-height: 1.85;
-        color: #3a3a3a;
-        white-space: pre-wrap;
-        border-top: 1px solid var(--ph-border);
-        padding-top: 1.25rem;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        max-height: 320px;
-        overflow-y: auto;
-    }
-
-    /* TOAST */
-    .ph-toast {
-        position: fixed;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        padding: 0.8rem 1.35rem;
-        border-radius: 10px;
-        font-size: 0.88rem;
-        font-weight: 500;
-        z-index: 9999;
-        box-shadow: 0 6px 24px rgba(0,0,0,0.15);
-        white-space: nowrap;
-        animation: phToastIn 0.3s ease, phToastOut 0.4s ease 3.5s forwards;
-    }
-
-    .ph-toast-success {
-        background: #2d6a4f;
-        color: #fff;
-    }
-
-    .ph-toast-error {
-        background: #c0392b;
-        color: #fff;
-    }
-
-    @@keyframes phToastIn {
-        from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(8px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-    }
-
-    @@keyframes phToastOut {
-        from {
-            opacity: 1;
-        }
-
-        to {
-            opacity: 0;
-            pointer-events: none;
-        }
-    }
-
-    .no-results {
-        display: none;
-        width: 100%;
-        min-height: 60vh;
-        background: transparent;
-        text-align: center;
-        padding: 3rem 1rem;
-        color: var(--ph-muted);
-        font-size: 0.9rem;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-    }
-
-    @@media (max-width: 768px) {
-        .ph-grid {
-            grid-template-columns: 1fr;
-            width: 100%;
-        }
-
-            .ph-grid main {
-                width: 100%;
-            }
-
-        .ph-sidebar {
-            position: static;
-            width: 100%;
-        }
-
-        .ph-page {
-            padding: 1.25rem 1rem;
-        }
-
-        .ph-nav {
-            padding: 0 1rem;
-            gap: 0.6rem;
-        }
-
-        .ph-search {
-            max-width: 180px;
-        }
-    }
-
-    @@media (max-width: 480px) {
-        .ph-search {
-            display: none;
-        }
-
-        .ph-tabs {
-            display: none;
-        }
-    }
-
-    .ph-main {
-        width: 100%;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .ph-author-follow {
-        margin-left: 0.5rem; /* NOT auto */
-        font-size: 0.72rem;
-        padding: 0.22rem 0.75rem;
-        border: 1px solid var(--ph-border);
-        border-radius: 20px;
-        background: transparent;
-        cursor: pointer;
-        color: var(--ph-muted);
-        transition: all 0.2s;
-        font-family: inherit;
-    }
-
-        .ph-author-follow:hover {
-            background: var(--ph-accent);
-            border-color: var(--ph-accent);
-            color: #fff;
-        }
-
-        .ph-author-follow.following {
-            background: rgba(200,149,90,0.12);
-            border-color: var(--ph-accent);
-            color: var(--ph-accent);
-        }
-
-    select:focus {
-        outline: none;
-        border: 1px solid #d4a373; 
-        box-shadow: 0 0 0 2px rgba(212, 163, 115, 0.2); 
-    }
-
-    select.ph-input {
-        width: 100%;
-        padding: 0.65rem 0.85rem; 
-        background-color: var(--ph-surface); 
-        border: 1px solid var(--ph-border);
-        border-radius: 8px;
-        font-family: inherit;
-        font-size: 0.9rem;
-        color: var(--ph-ink);
-        cursor: pointer;
-        appearance: none;
-        background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%2F%2Fwww.w3.org%2F2000%2Fsvg%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237a6a5a%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-        background-repeat: no-repeat;
-        background-position: right 0.85rem top 50%;
-        background-size: 0.65rem auto;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-        select.ph-input:focus {
-            border-color: var(--ph-accent);
-            box-shadow: 0 0 0 3px rgba(200,149,90,0.1);
-        }
-
-    /* Button look for the toggle */
-    .ph-switch-btn {
-        background: var(--ph-surface);
-        border: 1px solid var(--ph-border);
-        color: var(--ph-muted);
-        font-size: 0.75rem;
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        margin-bottom: 0.8rem;
-        cursor: pointer;
-        font-family: inherit;
-        transition: all 0.2s ease;
-        display: inline-block;
-    }
-
-        .ph-switch-btn:hover {
-            border-color: var(--ph-accent);
-            color: var(--ph-accent);
-            background: #fff;
-        }
-    
-    #anthologyToggleBtn.create-anthology-btn {
-        all: unset; 
-        display: inline-flex; 
-        align-items: center;
-        justify-content: center;
-        
-        background-color: #ffffff;
-        border: 1px solid var(--ph-border); 
-        color: var(--ph-ink); 
-    
-        padding: 6px 12px;
-        border-radius: 16px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        margin-bottom: 12px; 
-        transition: all 0.2s ease;
-    }
-
-        
-        #anthologyToggleBtn.create-anthology-btn:hover {
-            background-color: #f9f9f9;
-            border-color: var(--ph-accent);
-            color: var(--ph-accent);
-        }
-</style>
