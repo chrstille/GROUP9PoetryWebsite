@@ -13,13 +13,15 @@
 <nav class="ph-nav">
     <a class="ph-logo" href="#">Poetry <em>Haven</em></a>
     <div class="ph-nav-divider"></div>
+    @* commented because it has been moved and the new position is not final yet
     <div class="ph-search">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
         </svg>
-        <input type="text" id="poemSearch" oninput="filterPoems()" placeholder="Search poems, poets…" />
+        <input type="text" id="poemSearch" oninput="applyFilters()" placeholder="Search poems, poets…" />
     </div>
+    *@
     <div class="ph-spacer"></div>
     <button class="ph-nav-action" onclick="toggleNotif()" aria-label="Notifications">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -218,28 +220,6 @@
                 </div>
             </div>
 
-            <!-- Anthologies Sidebar -->
-            <div class="ph-sb-block">
-                <p class="ph-sb-title">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                    </svg>
-                    Sort by Anthologies
-                </p>
-                <div class="ph-tags">
-                    @if (Model.AnthologyOptions != null)
-                    {
-                        @foreach (var anth in Model.AnthologyOptions)
-                        {
-                            <span class="ph-tag" onclick="filterByAnthology(this, '@anth.Text')">
-                                @anth.Text
-                            </span>
-                        }
-                    }
-                </div>
-            </div>
-
             <!-- Poets to Follow -->
             <div class="ph-sb-block">
                 <p class="ph-sb-title">
@@ -298,6 +278,42 @@
                             onclick="toggleFollow(this,'Diego Ferreira')">
                         Follow
                     </button>
+                </div>
+            </div>
+            
+            <!-- Anthologies Sidebar -->
+            <div class="ph-sb-block">
+                <p class="ph-sb-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                    Search Bar
+                </p>
+                <div class="ph-search ">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                    <input type="text" id="poemSearch" oninput="applyFilters()" placeholder="Search poems, poets…" />
+                </div>
+                <p class="ph-sb-title" style="margin-top: 1.5rem;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                    Sort by Anthologies
+                </p>
+                <div class="ph-tags">
+                    @if (Model.AnthologyOptions != null)
+                    {
+                        @foreach (var anth in Model.AnthologyOptions)
+                        {
+                            <span class="ph-tag" onclick="filterByAnthology(this, '@anth.Text')">
+                                @anth.Text
+                            </span>
+                        }
+                    }
                 </div>
             </div>
 
