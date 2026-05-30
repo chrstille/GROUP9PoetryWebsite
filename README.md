@@ -32,3 +32,8 @@ They are given the freedom to think of a title for their poem, the creative vers
 If the user wants to view poems that belong to a specific anthology, they can sort their main feed by selecting anthologies from the sidebar (which can be found in the right side of their screen).
 There's also an option to view poems that aren't classified under an anthology
 
+-- SEARCH BAR --
+If the user wants to search for poem titles or a specific author instead of a specific anthology, they can use the searchbar to filter out the poems to be displayed on the main feed. This search bar works for both the poem title and poem author.
+
+-- SEARCH BAR and ANTHOLOGY SORTING COMBINATION --
+The user can search for poem titles AND sort by anthology, just input the title or author then click on any anthology for sort and the main feed will filter the poem to be displayed.
